@@ -4,9 +4,9 @@
     "displayName": "Text Event Toolkit",
     "description": "A set of tools for creating text events in Unity",
     "unity": "2021.3",
-    "documentationUrl": "https://example.com/",
-    "changelogUrl": "https://example.com/changelog.html",
-    "licensesUrl": "https://example.com/licensing.html",
+    "documentationUrl": "https://github.com/WoofWoofGrr/text-event-toolkit",
+    "changelogUrl": "https://github.com/WoofWoofGrr/text-event-toolkit",
+    "licensesUrl": "https://github.com/WoofWoofGrr/text-event-toolkit",
     "dependencies": {
       "com.unity.textmeshpro": "3.0.0"
    },
