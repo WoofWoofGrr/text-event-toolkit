@@ -1,3 +1,16 @@
 {
-	"name": "devonmillar.TextEventToolkit.Editor"
+    "name": "devonmillar.TextEventToolkit.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0c2de2bf92ce4cd419d2199e9d6d5482"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

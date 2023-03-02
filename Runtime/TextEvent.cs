@@ -31,7 +31,6 @@ namespace DevonMillar.TextEvents
             {
                 return;
             }
-            Object file = (Object)AssetDatabase.LoadAssetAtPath("/TextEvents", typeof(Object));
 
             textEventsData = XDocument.Parse(Resources.Load("TextEvents").ToString());
             Debug.Log("Loaded text event XML data");
