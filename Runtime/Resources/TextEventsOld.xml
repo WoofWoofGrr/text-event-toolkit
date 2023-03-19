@@ -37,6 +37,26 @@ magicOrb                - no effect yet
 -->
 
 <TextEvents>
+    <Event id ="NewTextEvent" title = "New Text Event" text ="">
+        <Choice text = "Fight">
+            <!--this result has no text so action should be executed instantly--> 
+            <Result>
+                <Action> enter combat</Action> 
+            </Result>
+        </Choice>
+        <Choice text = "Try talk your way past them">
+            <Result text = "You tell the guard you are a lone traveler and are allowed to pass" chance = "50">
+                <action>
+                    
+                </action>
+            </Result>
+            <Result text = "You are recognized as soon as you speak, a guard lands the first hit on you." chance = "50">
+                <Action arg="10">RemoveHP</Action>
+                <Action>EnterCombat</Action>
+            </Result>
+        </Choice>
+    </Event>
+
     <Event id ="GuardPatrol" title = "Guard Patrol" text ="You are stopped by a guard patrol, they don't seem to recognize you.">
         <Choice text = "Fight">
             <!--this result has no text so action should be executed instantly--> 

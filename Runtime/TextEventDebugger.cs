@@ -21,7 +21,7 @@ namespace DevonMillar.TextEvents
         void LoadEvent(int num)
         {
             TextEvent.ForceExitAllEvents();
-            TextEvent.CreateFromID(selector.options[num].text).EnterEvent();
+            TextEvent.CreateFromIndex(num).EnterEvent();
         }
 
         private void Awake()
@@ -36,7 +36,7 @@ namespace DevonMillar.TextEvents
         private void Init()
         {
             selector.ClearOptions();
-            selector.AddOptions(TextEvent.GetAllEventIDs(true, true));
+            selector.AddOptions(Serializer.GetAllEventTitlesWithID(true));
         }
 
         // Start is called before the first frame update

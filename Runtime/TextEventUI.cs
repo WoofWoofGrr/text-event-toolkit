@@ -53,7 +53,11 @@ namespace DevonMillar.TextEvents
                 offset += newChoiceUI.rectTransform.sizeDelta.y; ;
             }
         }
-        private void DestroyChoices() => activeChoices.ForEach(choice => GameObject.Destroy(choice.gameObject));
+        private void DestroyChoices()
+        {
+            activeChoices.ForEach(e => GameObject.Destroy(e.gameObject));
+            activeChoices.Clear();
+        }
 
         private void TextEventUpdateUI(string _title, string _body, List<TextEvent.Choice> _choices = null)
         {

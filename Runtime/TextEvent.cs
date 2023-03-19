@@ -2,137 +2,91 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Xml;
 using System.Linq;
-using System.Xml.Linq;
 using UnityEditor;
+using System.Xml.Linq;
 
 namespace DevonMillar.TextEvents
 {
-    public class XMLNodeBased
+    [System.Serializable]
+    public class TextEvent
     {
-        public string Text { get; protected set; }
-
-        public XMLNodeBased(XElement _node)
-        {
-            Text = _node.Attribute("text")?.Value;
-        }
-    }
-
-    public class TextEvent : XMLNodeBased
-    {
-        static bool initilized = false;
-        static XDocument textEventsData;
         static List<string> bannedEventIDs = new List<string>();
         public static event System.Action<TextEvent> OnAnyTextEventEnter;
         static event System.Action ForceExitEvents;
 
-        private static void Init(bool _force = false)
-        {
-            if (!_force && initilized)
-            {
-                return;
-            }
-
-            textEventsData = XDocument.Parse(Resources.Load("TextEvents").ToString());
-            Debug.Log("Loaded text event XML data");
-            initilized = true;
-        }
-
-        public static void Refresh() => Init(true);
+        public static void Refresh() => Serializer.Init();
 
         public static void ForceExitAllEvents() => ForceExitEvents?.Invoke();
 
         //TODO: use GetAllEventIDs
-        public static TextEvent CreateRandom()
+        public static TextEvent CreateRandom(bool allowBanned = false)
         {
-            Init();
+            //TODO: ban check
+            return Serializer.CreateEvent(Serializer.GetRandomNode(x => !bannedEventIDs.Contains(x.Attribute("id").Value)));
+        }
 
-            XElement eventNode = textEventsData.Descendants("Event").Where(x => !bannedEventIDs.Contains(x.Attribute("id").Value)).GetRandom();
+        public static TextEvent CreateFromIndex(int _index, bool allowBanned = false)
+        {
+            XElement eventNode;
+            eventNode = Serializer.GetNode(_index);
 
-            if (eventNode == null)
+            if (eventNode != null && !allowBanned && bannedEventIDs.Contains(eventNode.Attribute("id").Value))
             {
-                Debug.LogWarning("Could not find any events that aren't banned.");
                 return null;
             }
-
-            return new TextEvent(eventNode);
-        }
-        public static TextEvent CreateFromID(string _id, bool allowBanned = false)
-        {
-            Init();
-
-            XElement eventNode;
-            if (!allowBanned)
-            {
-                eventNode = textEventsData.Descendants("Event").Where(x => !bannedEventIDs.Contains(x.Attribute("id").Value) && x.Attribute("id").Value == _id).FirstOrDefault();
-            }
-            else
-            {
-                eventNode = textEventsData.Descendants("Event").Where(x => x.Attribute("id").Value == _id).FirstOrDefault();
-            }
-
-            return new TextEvent(eventNode);
-
-        }
-
-        public static List<string> GetAllEventIDs(bool _includeBanned = false, bool _includeDebug = false)
-        {
-            List<string> eventIDs = new List<string>();
-            Init();
-
-            System.Func<XElement, bool> bannedPredicate = (x) => _includeBanned || !bannedEventIDs.Contains(x.Attribute("id").Value);
-            System.Func<XElement, bool> debugPredicate = (x) => _includeBanned || ((x.Attribute("debug")?.Value ?? "false") != "true");
-
-            eventIDs.AddRange(textEventsData.Descendants("Event").Where(x => bannedPredicate(x) && debugPredicate(x)).Select(x => x.Attribute("id").Value));
-
-
-            return eventIDs;
-
+            
+            return Serializer.CreateEvent(eventNode);
         }
 
         public List<Choice> Choices { get; private set; }
-        public string ID { get; private set; }
-        public string Title => title != null ? title : ID;
-
-        private string title;
+        public int ID { get; private set; }
+        public string Title { get; set; }
+        public string Text { get; set; }
 
         private Result result;
         public event System.Action OnTextEventEnter;
         public event System.Action<TextEvent> OnTextEventExit;
         public event System.Action<Choice, Result> OnChoiceSelected;
 
-
-        //create instance from XML event
-        private TextEvent(XElement _eventNode) : base(_eventNode)
+        public TextEvent(string _title, string _text, int _id, Result _result, IEnumerable<Choice> _choices)
         {
-            ID = _eventNode.Attribute("id").Value;
-            title = _eventNode.Attribute("title")?.Value;
+            Text = _text;
+            Title = _title;
+            result = _result;
+            Choices = new ();
+            ID = _id;
+
             ForceExitEvents += ExitEvent;
 
-            XElement resultNode = _eventNode.Elements("Result").FirstOrDefault();
-            if (resultNode != null)
+            if (_choices != null)
             {
-                result = new Result(resultNode);
+                Choices.AddRange(_choices);
             }
 
-            List<XElement> choiceNodes = _eventNode.Elements("Choice").ToList();
 
-            Choices = new();
-
-            //create default choice if the event has none
-            if (choiceNodes.Count() == 0)
-            {
-                choiceNodes.Add(Choice.CreateDefaultChoiceNode());
-            }
-            foreach (XElement choiceNode in choiceNodes)
-            {
-                Choice newChoice = new Choice(choiceNode);
-                newChoice.OnChoiceSelected += (choice, result) => OnChoiceSelected(choice, result);
-                newChoice.OnFinalChoice += (choice, result) => ExitEvent();
-                Choices.Add(newChoice);
-            }
-
+            SubscribeToChoiceEvents(Choices);
         }
 
+        void SubscribeToChoiceEvents(IEnumerable<Choice> _choices)
+        {
+            foreach (Choice choice in _choices)
+            {
+                choice.OnChoiceSelected += (choice, result) => OnChoiceSelected(choice, result);
+                choice.OnFinalChoice += (choice, result) => ExitEvent();
+
+                //recurse for any branching choices
+                foreach (Result result in choice.Results)
+                {
+                    SubscribeToChoiceEvents(result.Choices);
+                }
+            }
+        }
+
+        public void AddChoice(Choice _newChoice)
+        {
+            Choices.Add(_newChoice);
+        }
+         
         public void EnterEvent()
         {
             GameObject.Instantiate(Resources.Load("TextEventCreator"));
@@ -154,8 +108,15 @@ namespace DevonMillar.TextEvents
             OnTextEventExit = null;
         }
 
-        public class Choice : XMLNodeBased
+        [System.Serializable]
+        public class Choice
         {
+            public List<Result> Results { get; private set; }
+            public string Text { get; set; }
+
+            public string PostText { get; private set; }
+            public event System.Action<Choice, Result> OnChoiceSelected;
+            public event System.Action<Choice, Result> OnFinalChoice;
 
             public static XElement CreateDefaultChoiceNode()
             {
@@ -163,33 +124,41 @@ namespace DevonMillar.TextEvents
                 e.SetAttributeValue("text", "Continue...");
                 return e;
             }
-            List<Result> results = new();
-            public string PostText { get; private set; }
-            public event System.Action<Choice, Result> OnChoiceSelected;
-            public event System.Action<Choice, Result> OnFinalChoice;
 
-            public Choice(XElement _choiceNode) : base(_choiceNode)
+            public Choice(string _text, IEnumerable<Result> _results, string _postText = "")
             {
-                results.AddRange(
-                    _choiceNode.Elements("Result").Select(node => new Result(node))
-                    );
-                PostText = _choiceNode.Attribute("postText")?.Value ?? "";
+                Text = _text;
+                Results = new();
+
+                if (_results != null)
+                {
+                    Results.AddRange(_results);
+                }
+            }
+
+            public void AddResult(Result _newResult)
+            {
+                Results.Add(_newResult);
+            }
+            public void RemoveResult(Result _result)
+            {
+                Results.Remove(_result);
             }
 
             public Result Pick()
             {
                 Result chosenResult = null;
-                if (results.Count > 0)
+                if (Results.Count > 0)
                 {
-                    chosenResult = results.First();
+                    chosenResult = Results.First();
 
-                    if (results.Count > 1)
+                    if (Results.Count > 1)
                     {
-                        float totalChance = results.Sum(result => result.Chance.Value);
+                        float totalChance = Results.Sum(result => result.Chance.Value);
                         float roll = Random.Range(0, totalChance);
 
                         //pick a random result based on the chance weightings
-                        foreach (Result result in results)
+                        foreach (Result result in Results)
                         {
                             roll -= result.Chance.Value;
                             if (roll <= 0.0f)
@@ -232,7 +201,7 @@ namespace DevonMillar.TextEvents
                 s += PostText;
                 s += "\n";
 
-                foreach (Result result in results)
+                foreach (Result result in Results)
                 {
                     s += result;
                 }
@@ -261,42 +230,45 @@ namespace DevonMillar.TextEvents
             return s;
         }
 
-        //optional text & actions parsed from the xml data to perform on event enter or choice
-        public class Result : XMLNodeBased
+        [System.Serializable]
+        public class Result
         {
-            List<System.Action> resultActions = new();
-            public bool IsFinal => Text == null;
+            public List<System.Action> Actions { get; private set; } = new();
+            public string Text { get; set; }
+            public bool IsFinal => Text == null || Text == "";
             public List<Choice> Choices { get; private set; } = new();
-
             public float? Chance { get; private set; } = null;
 
-            public Result(XElement _resultNode) : base(_resultNode)
+            public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<System.Action> _resultActions)
             {
-                string chanceStr = _resultNode.Attribute("chance")?.Value;
-                if (chanceStr != null)
+                Actions = new();
+                Choices = new();
+
+                if (_resultActions != null)
                 {
-                    Chance = float.Parse(chanceStr);
+                    Actions.AddRange(_resultActions);
                 }
+                if (_choices != null)
+                {
+                    Choices.AddRange(_choices);
+                }
+                Text = _text;
+                Chance = chance;
                 if (!IsFinal)
                 {
-                    Choices.Add(new Choice(Choice.CreateDefaultChoiceNode()));
+                    Choices.Add(Serializer.CreateChoice(Choice.CreateDefaultChoiceNode()));
                 }
-
-                foreach (XElement actionNode in _resultNode.Elements("Action"))
-                {
-                    var method = typeof(TextEventActions).GetMethod("GiveCard");
-                    System.Action call = () => method.Invoke(null, new object[] { });
-
-                    resultActions.Add(call);
-
-                }
-                //Debug.Log(_resultNode.Elements("Action").First().FirstNode.ToString());
             }
 
-            //run all the actions
+            public void AddChoice(Choice _newChoice)
+            {
+                Choices.Add(_newChoice);
+            }
+
+            //run all the actions the result contains
             public void Execute()
             {
-                foreach (System.Action action in resultActions)
+                foreach (System.Action action in Actions)
                 {
                     action.Invoke();
                 }
@@ -316,7 +288,7 @@ namespace DevonMillar.TextEvents
                     s += "        " + Text + "\n";
                 }
 
-                foreach (System.Action action in resultActions)
+                foreach (System.Action action in Actions)
                 {
                     s += "        Action: " + action + "\n";
                 }
