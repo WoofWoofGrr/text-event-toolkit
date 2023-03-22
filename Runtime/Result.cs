@@ -3,12 +3,24 @@ using System.Linq;
 
 namespace DevonMillar.TextEvents
 {
+    public class MethodNameAndArgs
+    {
+        public string Name { get; set;}
+        public object[] Args { get; set; }
+
+        public MethodNameAndArgs(string _name, params object[] _args)
+        {
+            Name = _name;
+            Args = _args;
+        }
+    }
+
     public partial class TextEvent
     {
         [System.Serializable]
         public class Result
         {
-            public List<string> ActionMethodNames { get; private set; } = new();
+            public List<MethodNameAndArgs> ActionMethodNamesAndArgs { get; private set; } = new();
             public string Text { get; set; }
             public bool IsFinal => Text == null || Text == "";
             public float Chance { get; set; }
@@ -20,14 +32,14 @@ namespace DevonMillar.TextEvents
             List<System.Action> actionMethods = new();
             System.Threading.Thread actionParseThread;
 
-            public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<string> _resultActions)
+            public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<MethodNameAndArgs> _resultActions)
             {
-                ActionMethodNames = new();
+                ActionMethodNamesAndArgs = new();
                 Choices = new();
 
                 if (_resultActions != null)
                 {
-                    ActionMethodNames.AddRange(_resultActions);
+                    ActionMethodNamesAndArgs.AddRange(_resultActions);
                 }
                 if (_choices != null)
                 {
@@ -48,10 +60,10 @@ namespace DevonMillar.TextEvents
             void ParseActions()
             {
                 List<TextEventAction.AtributeAndMethod> methods = TextEventAction.GetAll();
-                foreach (string actionStr in ActionMethodNames)
+                foreach (MethodNameAndArgs methodNameAndArgs in ActionMethodNamesAndArgs)
                 {
-                    System.Reflection.MethodInfo method = methods.Where(e => e.method.Name == actionStr).Select(e => e.method).First();
-                    actionMethods.Add(() => method.Invoke(null, null));
+                    System.Reflection.MethodInfo method = methods.Where(e => e.method.Name == methodNameAndArgs.Name).Select(e => e.method).First();
+                    actionMethods.Add(() => method.Invoke(null, methodNameAndArgs.Args));
                 }
             }
 

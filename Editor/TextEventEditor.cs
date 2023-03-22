@@ -146,11 +146,11 @@ namespace DevonMillar.TextEvents
                 EditorGUILayout.LabelField("Actions");
 
                 //loop over each action in the result
-                for (int i = 0; i < _result.ActionMethodNames.Count; i++) 
+                for (int i = 0; i < _result.ActionMethodNamesAndArgs.Count; i++) 
                 {
                     string[] actionOptions = availableActions.Select(e => e.attribute.Name).ToArray();
 
-                    object key = _result + _result.ActionMethodNames[i] + i;
+                    object key = _result + _result.ActionMethodNamesAndArgs[i].Name + i;
 
                     //load saved dropdown index or create one if none exists
                     if (!dropDownIndex.ContainsKey(key))
@@ -175,21 +175,31 @@ namespace DevonMillar.TextEvents
                     if (newIndex != dropDownIndex[key])
                     {
                         dropDownIndex[key] = newIndex;
-                        _result.ActionMethodNames[i] = availableActions[newIndex].method.Name;
+                        _result.ActionMethodNamesAndArgs[i].Name = availableActions[newIndex].method.Name;
                     }
 
                     //loop over the parameters of the selected action method
-                    availableActions[newIndex].method.GetParameters().ToList().ForEach(e =>
+
+
+                    var methodParams = availableActions[newIndex].method.GetParameters();
+
+                    object[] resultActionArgs = new object[methodParams.Length];
+
+                    for (int j = 0; j < methodParams.Length; j++)
                     {
-                        object argKey = i + availableActions[newIndex].method.Name + e.Name;
+                        object argKey = i + availableActions[newIndex].method.Name + methodParams[j].Name;
                         Debug.Log(argKey);
                         if (!args.ContainsKey(argKey))
                         {
-                            args.Add(argKey, e.DefaultValue);
+                            args.Add(argKey, methodParams[j].DefaultValue);
                         }
 
-                        args[argKey] = DrawArgField(e.ParameterType, args[argKey]);
-                    });
+                        args[argKey] = DrawArgField(methodParams[j].ParameterType, args[argKey]);
+                        resultActionArgs[j] = args[argKey];
+                    }
+
+                    _result.ActionMethodNamesAndArgs[i].Args = resultActionArgs;
+
                     EditorGUILayout.EndHorizontal();
 
 
@@ -198,7 +208,8 @@ namespace DevonMillar.TextEvents
                 GUILayout.Space(15.0f * EditorGUI.indentLevel);
                 if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
                 {
-                    _result.ActionMethodNames.Add("");
+                    //TODO: adder method
+                    _result.ActionMethodNamesAndArgs.Add(new MethodNameAndArgs("", null));
                 }
                 GUILayout.EndHorizontal();
             }

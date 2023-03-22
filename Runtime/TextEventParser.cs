@@ -128,11 +128,34 @@ namespace DevonMillar.TextEvents
             string text = _resultNode.Attribute("text").Value;
             float? chance = Serializer.ParseResultChance(_resultNode);
 
-            List<string> resultActions = new();
+            List<MethodNameAndArgs> resultActions = new();
             foreach (XElement actionNode in _resultNode.Elements("Action"))
             {
                 string methodName = actionNode.Attribute("MethodName").Value;
-                resultActions.Add(methodName);
+
+                XAttribute[] argAtributes = actionNode.Attributes().Where(e => e.Name.ToString().StartsWith("arg")).ToArray();
+                object[] args = new object[argAtributes.Length];
+
+                //loop over the arg atributes in the xml file and parse them into the correct type
+                for (int i = 0; i < argAtributes.Length; i++)
+                {
+                    string argValStr = argAtributes[i].Value.Substring(argAtributes[i].Value.IndexOf(':') + 1);
+
+                    if (argAtributes[i].Value.StartsWith("int:"))
+                    {
+                        args[i] = int.Parse(argValStr);
+                    }
+                    else if (argAtributes[i].Value.StartsWith("float:"))
+                    {
+                        args[i] = float.Parse(argValStr);
+                    }
+                    else if (argAtributes[i].Value.StartsWith("bool:"))
+                    {
+                        args[i] = bool.Parse(argValStr);
+                    }
+                }
+
+                resultActions.Add(new MethodNameAndArgs(methodName, args));
             }
 
             return new TextEvent.Result(text, chance, ExtractChoices(_resultNode), resultActions);
@@ -178,11 +201,33 @@ namespace DevonMillar.TextEvents
 
             element.Add(new XAttribute("chance", _result.Chance));
 
-            if (_result.ActionMethodNames != null)
+            if (_result.ActionMethodNamesAndArgs != null)
             {
-                foreach (string action in _result.ActionMethodNames)
+                for (int i = 0; i < _result.ActionMethodNamesAndArgs.Count; i++)
                 {
-                    element.Add(new XElement("Action", new XAttribute("MethodName", action)));
+                    element.Add(new XElement("Action", new XAttribute("MethodName", _result.ActionMethodNamesAndArgs[i].Name)));
+                    XElement actionElement = element.Elements("Action").Last();
+                    for (int j = 0; j < _result.ActionMethodNamesAndArgs[i].Args.Length; j++)
+                    {
+                        object arg = _result.ActionMethodNamesAndArgs[i].Args[j];
+                        string tytpeStr = null;
+
+                        if (arg is int)
+                        {
+                            tytpeStr = "int:";
+                        }
+                        else if (arg is float)
+                        {
+                            tytpeStr = "float:";
+
+                        }
+                        else if (arg is bool)
+                        {
+                            tytpeStr = "bool:";
+                        }
+
+                        actionElement.Add(new XAttribute("arg" + j, tytpeStr + arg));
+                    }
                 }
             }
 

@@ -12,7 +12,6 @@ namespace DevonMillar.TextEvents
     public class TextEventAction : Attribute
     {
         public string Name { get; private set; }
-        //Type[] argTypes
 
         public struct AtributeAndMethod
         {
