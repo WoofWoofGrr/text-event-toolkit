@@ -1,8 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
 using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace DevonMillar.TextEvents
 {
@@ -14,7 +13,13 @@ namespace DevonMillar.TextEvents
         GUIStyle textAreaStyle;
 
         static System.Action OnReload;
-        Queue<System.Action> actionQueue = new();
+        Queue<System.Action> workQueue = new();
+        Dictionary<object, bool> foldouts = new();
+        Dictionary<object, int> dropDownIndex = new();
+        Dictionary<object, object> args = new();
+
+        Color[] indentColors;
+        List<TextEventAction.AtributeAndMethod> availableActions;
 
         [MenuItem("Tools/Text Event Editor")]
         public static void ShowWindow()
@@ -35,7 +40,9 @@ namespace DevonMillar.TextEvents
             GUILayout.Label("Event body");
             _event.Text = EditorGUILayout.TextArea(_event.Text, new GUIStyle(EditorStyles.textArea), GUILayout.Height(position.height / 5.0f));
 
-            DrawAllChoices(_event.Choices);
+            GUILayout.Label("Choices");
+
+            DrawAllChoices(_event.Choices, (choice) => _event.Choices.Remove(choice));
 
             if (GUILayout.Button("Add choice"))
             {
@@ -43,64 +50,225 @@ namespace DevonMillar.TextEvents
             }
         }
 
-        void DrawAllChoices(IEnumerable<TextEvent.Choice> _choices)
+        void DrawAllChoices(IEnumerable<TextEvent.Choice> _choices, System.Action<TextEvent.Choice> _deleteAction)
         {
             int i = 1;
             foreach (TextEvent.Choice choice in _choices)
             {
-                DrawChoice(choice, i);
+                DrawChoice(choice, _deleteAction);
                 i++;
             }
         }
 
-        void DrawChoice(TextEvent.Choice _choice, int _choiceIndex)
+        void DrawChoice(TextEvent.Choice _choice, System.Action<TextEvent.Choice> _deleteAction)
         {
-            EditorGUILayout.LabelField("Choice " + _choiceIndex);
-            _choice.Text = EditorGUILayout.TextArea(_choice.Text, textAreaStyle);
+            if (!foldouts.ContainsKey(_choice))
+            {
+                foldouts.Add(_choice, false);
+            }
+
+            GUIStyle vertColorStyle = GUI.skin.box;
+
+            Texture2D tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, indentColors[EditorGUI.indentLevel % indentColors.Length]);
+            tex.Apply();
+            vertColorStyle.normal.background = tex;
+
+            GUILayout.BeginHorizontal();
+            _choice.Text = EditorGUILayout.TextField(_choice.Text, textAreaStyle);
+
+            string infoText = "";
+
+            if (_choice.Results.Count > 0)
+            {
+                infoText += " - " + _choice.Results.Count + " result" + (_choice.Results.Count > 1 ? "s" : "");
+            }
+            foldouts[_choice] = EditorGUILayout.Foldout(foldouts[_choice], infoText);
+
+            GUILayout.Space(10);
+
+            if (GUILayout.Button("Delete choice", GUILayout.MaxWidth(100)))
+            {
+                //add the delete action to the queue to delete later in case we're in a loop
+                workQueue.Enqueue(() => _deleteAction(_choice));
+            }
+
+            GUILayout.EndHorizontal();
+
+            if (!foldouts[_choice])
+            {
+                return;
+            }
+            GUILayout.BeginVertical(vertColorStyle);
 
             //draw each possible result of this choice
             _choice.Results.ForEach(e => DrawResult(e, () => _choice.RemoveResult(e)));
 
-
             GUILayout.BeginHorizontal();
+
             GUILayout.Space(15.0f * EditorGUI.indentLevel);
 
             if (GUILayout.Button("Add result", GUILayout.MaxWidth(100)))
             {
                 _choice.AddResult(new TextEvent.Result("", null, null, null));
             }
+
             GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
         }
 
         void DrawResult(TextEvent.Result _result, System.Action _deleteAction)
         {
-            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel += 2;
+            GUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Result");
-            _result.Text = EditorGUILayout.TextArea(_result.Text, new GUIStyle(EditorStyles.textArea));
-            DrawAllChoices(_result.Choices);
+            if (GUILayout.Button("Delete result", GUILayout.MaxWidth(100)))
+            {
+                //delete this later in case we're in a loop
+                workQueue.Enqueue(_deleteAction);
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Text");
+            EditorGUILayout.LabelField("Chance");
+            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Add choice"))
+
+            _result.Text = EditorGUILayout.TextField(_result.Text);
+            _result.Chance = EditorGUILayout.FloatField(_result.Chance);
+            GUILayout.EndHorizontal();
+
+
+            if (availableActions.Count > 0)
+            {
+                GUILayout.Space(15.0f * EditorGUI.indentLevel);
+                EditorGUILayout.LabelField("Actions");
+
+                //loop over each action in the result
+                for (int i = 0; i < _result.ActionMethodNames.Count; i++) 
+                {
+                    string[] actionOptions = availableActions.Select(e => e.attribute.Name).ToArray();
+
+                    object key = _result + _result.ActionMethodNames[i] + i;
+
+                    //load saved dropdown index or create one if none exists
+                    if (!dropDownIndex.ContainsKey(key))
+                    {
+                        dropDownIndex.Add(key, -1);
+                    }
+
+                    EditorGUILayout.BeginHorizontal();
+                    int newIndex = EditorGUILayout.Popup(
+                    "Action:",
+                    dropDownIndex[key],
+                    actionOptions
+                    );
+                    
+                    if (newIndex < 0)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        return;
+                    }
+                    
+
+                    if (newIndex != dropDownIndex[key])
+                    {
+                        dropDownIndex[key] = newIndex;
+                        _result.ActionMethodNames[i] = availableActions[newIndex].method.Name;
+                    }
+
+                    //loop over the parameters of the selected action method
+                    availableActions[newIndex].method.GetParameters().ToList().ForEach(e =>
+                    {
+                        object argKey = i + availableActions[newIndex].method.Name + e.Name;
+                        Debug.Log(argKey);
+                        if (!args.ContainsKey(argKey))
+                        {
+                            args.Add(argKey, e.DefaultValue);
+                        }
+
+                        args[argKey] = DrawArgField(e.ParameterType, args[argKey]);
+                    });
+                    EditorGUILayout.EndHorizontal();
+
+
+                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(15.0f * EditorGUI.indentLevel);
+                if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
+                {
+                    _result.ActionMethodNames.Add("");
+                }
+                GUILayout.EndHorizontal();
+            }
+
+
+            EditorGUILayout.LabelField("Choices");
+            DrawAllChoices(_result.Choices, (choice) => _result.RemoveChoice(choice));
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(15.0f * EditorGUI.indentLevel);
+            if (GUILayout.Button("Add choice", GUILayout.MaxWidth(100)))
             {
                 _result.AddChoice(new TextEvent.Choice("A choice", null));
             }
 
-            if (GUILayout.Button("Delete result", GUILayout.MaxWidth(100)))
-            {
-                //delete this later in case we're in a loop
-                actionQueue.Enqueue(_deleteAction);
-            }
             GUILayout.EndHorizontal();
-            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel -= 2;
+
+            GUILayout.Space(30.0f);
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
+        //welcome to hell
+        object DrawArgField(System.Type _argType, object _val)
+        {
+            //there might be a better way to do this but I don't know any
+            if (_argType == typeof(int))
+            {
+               return EditorGUILayout.IntField(System.Convert.ToInt32(_val));
+            }
+            if (_argType == typeof(float))
+            {
+               return EditorGUILayout.FloatField((float)_val);
+            }
+            if (_argType == typeof(bool))
+            {
+               return EditorGUILayout.Toggle((bool)_val);
+            }
+            return null;
+        }
+
+        void GetActions()
+        {
+            availableActions = TextEventAction.GetAll();
         }
 
         private void OnEnable()
         {
+            System.Random rng = new System.Random(42);
+            GetActions();
             Serializer.Init();
+            indentColors = new Color[20];
+
+            for (int i = 0; i < indentColors.Length; i++)
+            {
+                indentColors[i] = new Color((float)rng.NextDouble() * 0.5f, (float)rng.NextDouble() * 0.5f, (float)rng.NextDouble(), 0.3f);
+            }
+
+            if (selectedEvent == null)
+            {
+                ChangeEvent(0);
+            }
         }
+
+        Vector2 scrollPos = new Vector2();
 
         private void OnGUI()
         {
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true);
+
             textAreaStyle = new GUIStyle(EditorStyles.textArea);
             textAreaStyle.wordWrap = true;
             //
@@ -131,6 +299,10 @@ namespace DevonMillar.TextEvents
                 ChangeEvent(index);
             }
 
+            if (selectedEvent == null)
+            {
+                return;
+            }
             DrawEvent(selectedEvent);
 
             GUILayout.FlexibleSpace();
@@ -159,7 +331,9 @@ namespace DevonMillar.TextEvents
             }
             GUILayout.EndVertical();
 
-            while (actionQueue.Any()) actionQueue.Dequeue().Invoke();
+            EditorGUILayout.EndScrollView();
+
+            while (workQueue.Any()) workQueue.Dequeue().Invoke();
         }
 
         void ChangeEvent(int _index)

@@ -128,16 +128,14 @@ namespace DevonMillar.TextEvents
             string text = _resultNode.Attribute("text").Value;
             float? chance = Serializer.ParseResultChance(_resultNode);
 
+            List<string> resultActions = new();
             foreach (XElement actionNode in _resultNode.Elements("Action"))
             {
-                var method = typeof(TextEventActions).GetMethod("GiveCard");
-                //System.Action call = () => method.Invoke(null, new object[] { });
-
-                //resultActions.Add(call);
-
+                string methodName = actionNode.Attribute("MethodName").Value;
+                resultActions.Add(methodName);
             }
 
-            return new TextEvent.Result(text, chance, ExtractChoices(_resultNode), null);
+            return new TextEvent.Result(text, chance, ExtractChoices(_resultNode), resultActions);
         }
 
 #if UNITY_EDITOR
@@ -178,16 +176,13 @@ namespace DevonMillar.TextEvents
         {
             XElement element = new XElement("Result", new XAttribute("text", _result.Text));
 
-            if (_result.Chance != null)
-            {
-                element.Add(new XAttribute("chance", _result.Chance));
-            }
+            element.Add(new XAttribute("chance", _result.Chance));
 
-            if (_result.Actions != null)
+            if (_result.ActionMethodNames != null)
             {
-                foreach (System.Action action in _result.Actions)
+                foreach (string action in _result.ActionMethodNames)
                 {
-                    element.Add(new XElement("Action", action.Method.Name));
+                    element.Add(new XElement("Action", new XAttribute("MethodName", action)));
                 }
             }
 

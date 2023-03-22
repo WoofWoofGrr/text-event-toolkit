@@ -6,22 +6,16 @@ namespace DevonMillar.TextEvents
 {
     public class TextEventActions
     {
-        //public static TarotCardData GiveCard()
-        //{
-        //    return GameManager.GetInstance().DropRandomCard();
-        //}
-        //public static void GiveHP(float _hp)
-        //{
-        //    GameManager.GetInstance().PlayerStats.currentStats.currentHealth += _hp;
-        //}
-        //public static void RemoveHP(float _hp)
-        //{
-        //    GameManager.GetInstance().PlayerStats.currentStats.currentHealth -= _hp;
-        //}
-        //public static void EnterCombat()
-        //{
-
-        //}
+        [TextEventAction("Test method")]
+        public static void TestMethod()
+        {
+            Debug.Log("Invoked");
+        }
+        [TextEventAction("Arg test")]
+        public static void IntTest(int number = 5, bool tickbox = false, float anotherNumber = 1.0f)
+        {
+            Debug.Log("Int test: passed in " + number);
+        }
     }
 
 }
