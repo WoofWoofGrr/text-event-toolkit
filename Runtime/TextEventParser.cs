@@ -153,6 +153,10 @@ namespace DevonMillar.TextEvents
                     {
                         args[i] = bool.Parse(argValStr);
                     }
+                    else if (argAtributes[i].Value.StartsWith("string:"))
+                    {
+                        args[i] = argValStr;
+                    }
                 }
 
                 resultActions.Add(new MethodNameAndArgs(methodName, args));
@@ -219,13 +223,15 @@ namespace DevonMillar.TextEvents
                         else if (arg is float)
                         {
                             tytpeStr = "float:";
-
                         }
                         else if (arg is bool)
                         {
                             tytpeStr = "bool:";
                         }
-
+                        else if (arg is string)
+                        {
+                            tytpeStr = "string:";
+                        }
                         actionElement.Add(new XAttribute("arg" + j, tytpeStr + arg));
                     }
                 }

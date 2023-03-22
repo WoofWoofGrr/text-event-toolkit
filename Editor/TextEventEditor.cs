@@ -15,8 +15,7 @@ namespace DevonMillar.TextEvents
         static System.Action OnReload;
         Queue<System.Action> workQueue = new();
         Dictionary<object, bool> foldouts = new();
-        Dictionary<object, int> dropDownIndex = new();
-        Dictionary<object, object> args = new();
+        Dictionary<object, bool> storedToggles = new();
 
         Color[] indentColors;
         List<TextEventAction.AtributeAndMethod> availableActions;
@@ -148,21 +147,13 @@ namespace DevonMillar.TextEvents
                 //loop over each action in the result
                 for (int i = 0; i < _result.ActionMethodNamesAndArgs.Count; i++) 
                 {
-                    string[] actionOptions = availableActions.Select(e => e.attribute.Name).ToArray();
-
-                    object key = _result + _result.ActionMethodNamesAndArgs[i].Name + i;
-
-                    //load saved dropdown index or create one if none exists
-                    if (!dropDownIndex.ContainsKey(key))
-                    {
-                        dropDownIndex.Add(key, -1);
-                    }
+                    int newIndex = System.Array.IndexOf(availableActions.Select(e => e.method.Name).ToArray(), _result.ActionMethodNamesAndArgs[i].Name);
 
                     EditorGUILayout.BeginHorizontal();
-                    int newIndex = EditorGUILayout.Popup(
+                    newIndex = EditorGUILayout.Popup(
                     "Action:",
-                    dropDownIndex[key],
-                    actionOptions
+                    newIndex,
+                    availableActions.Select(e => e.attribute.Name).ToArray()
                     );
                     
                     if (newIndex < 0)
@@ -171,35 +162,32 @@ namespace DevonMillar.TextEvents
                         return;
                     }
                     
-
-                    if (newIndex != dropDownIndex[key])
-                    {
-                        dropDownIndex[key] = newIndex;
-                        _result.ActionMethodNamesAndArgs[i].Name = availableActions[newIndex].method.Name;
-                    }
-
-                    //loop over the parameters of the selected action method
-
+                    //this was in if
+                    _result.ActionMethodNamesAndArgs[i].Name = availableActions[newIndex].method.Name;
 
                     var methodParams = availableActions[newIndex].method.GetParameters();
 
                     object[] resultActionArgs = new object[methodParams.Length];
 
-                    for (int j = 0; j < methodParams.Length; j++)
+                    if (_result.ActionMethodNamesAndArgs[i].Args == null)
                     {
-                        object argKey = i + availableActions[newIndex].method.Name + methodParams[j].Name;
-                        Debug.Log(argKey);
-                        if (!args.ContainsKey(argKey))
-                        {
-                            args.Add(argKey, methodParams[j].DefaultValue);
-                        }
-
-                        args[argKey] = DrawArgField(methodParams[j].ParameterType, args[argKey]);
-                        resultActionArgs[j] = args[argKey];
+                        _result.ActionMethodNamesAndArgs[i].Args = new object[methodParams.Length];
                     }
 
-                    _result.ActionMethodNamesAndArgs[i].Args = resultActionArgs;
+                    //loop over the parameters of the selected action method and draw the respective feild for them
+                    for (int j = 0; j < methodParams.Length; j++)
+                    {
+                        if (_result.ActionMethodNamesAndArgs[i].Args[j] == null)
+                        {
+                            _result.ActionMethodNamesAndArgs[i].Args[j] = methodParams[j].DefaultValue;
+                        }
+                        _result.ActionMethodNamesAndArgs[i].Args[j] = DrawArgField(methodParams[j].ParameterType, _result.ActionMethodNamesAndArgs[i].Args[j], methodParams[j].Name);
+                    }
 
+                    //if (GUILayout.Button("Delete", GUILayout.MaxWidth(50)))
+                    //{
+                    //    workQueue.Enqueue(() => _result.RemoveActionMethodNamesAndArgs(i));
+                    //}
                     EditorGUILayout.EndHorizontal();
 
 
@@ -208,45 +196,67 @@ namespace DevonMillar.TextEvents
                 GUILayout.Space(15.0f * EditorGUI.indentLevel);
                 if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
                 {
-                    //TODO: adder method
                     _result.ActionMethodNamesAndArgs.Add(new MethodNameAndArgs("", null));
                 }
                 GUILayout.EndHorizontal();
             }
 
+            //draw result choices
 
-            EditorGUILayout.LabelField("Choices");
-            DrawAllChoices(_result.Choices, (choice) => _result.RemoveChoice(choice));
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(15.0f * EditorGUI.indentLevel);
-            if (GUILayout.Button("Add choice", GUILayout.MaxWidth(100)))
+            object key = _result + " branching";
+            if (!storedToggles.ContainsKey(key))
             {
-                _result.AddChoice(new TextEvent.Choice("A choice", null));
+                storedToggles.Add(key, false);
             }
 
-            GUILayout.EndHorizontal();
-            EditorGUI.indentLevel -= 2;
+            GUILayout.Space(10.0f);
+
+            storedToggles[key] = EditorGUILayout.Toggle("Branching", storedToggles[key]);
+            
+            if (storedToggles[key])
+            {
+                EditorGUILayout.LabelField("Choices");
+                DrawAllChoices(_result.Choices, (choice) => _result.RemoveChoice(choice));
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(15.0f * EditorGUI.indentLevel);
+                if (GUILayout.Button("Add choice", GUILayout.MaxWidth(100)))
+                {
+                    _result.AddChoice(new TextEvent.Choice("A choice", null));
+                }
+
+                GUILayout.EndHorizontal();
+                EditorGUI.indentLevel -= 2;
+            }
+
 
             GUILayout.Space(30.0f);
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         //welcome to hell
-        object DrawArgField(System.Type _argType, object _val)
+        object DrawArgField(System.Type _argType, object _val, string _label)
         {
             //there might be a better way to do this but I don't know any
             if (_argType == typeof(int))
             {
-               return EditorGUILayout.IntField(System.Convert.ToInt32(_val));
+               return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val));
             }
             if (_argType == typeof(float))
             {
-               return EditorGUILayout.FloatField((float)_val);
+               return EditorGUILayout.FloatField(_label, (float)_val);
             }
             if (_argType == typeof(bool))
             {
-               return EditorGUILayout.Toggle((bool)_val);
+               return EditorGUILayout.Toggle(_label, (bool)_val);
+            }
+            if (_argType == typeof(string))
+            {
+                return EditorGUILayout.TextField(_label, _val.ToString());
+            }
+            else
+            {
+                Debug.LogError("[TextEventAction] methods must only have parameters of type int, float, bool or string");
             }
             return null;
         }

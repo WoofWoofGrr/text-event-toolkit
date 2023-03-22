@@ -16,6 +16,11 @@ namespace DevonMillar.TextEvents
         {
             Debug.Log("Int test: passed in " + number);
         }
+        [TextEventAction("String test")]
+        public static void StringTest(string str)
+        {
+            Debug.Log("String test: passed in " + str);
+        }
     }
 
 }

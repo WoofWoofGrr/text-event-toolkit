@@ -56,7 +56,10 @@ namespace DevonMillar.TextEvents
                 actionParseThread = new System.Threading.Thread(ParseActions);
                 actionParseThread.Start();
             }
-
+            public void RemoveActionMethodNamesAndArgs(int _index)
+            {
+                ActionMethodNamesAndArgs.RemoveAt(_index);
+            }
             void ParseActions()
             {
                 List<TextEventAction.AtributeAndMethod> methods = TextEventAction.GetAll();
