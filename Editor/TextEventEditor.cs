@@ -118,7 +118,7 @@ namespace DevonMillar.TextEvents
 
             if (GUILayout.Button("Add result", GUILayout.MaxWidth(100)))
             {
-                _choice.AddResult(new TextEvent.Result("", null, null, null));
+                _choice.AddResult(new TextEvent.Result("", null, null, null, false));
             }
 
             GUILayout.EndHorizontal();
@@ -382,7 +382,7 @@ namespace DevonMillar.TextEvents
 
         void ChangeEvent(int _index)
         {
-            selectedEvent = TextEvent.CreateFromIndex(_index);
+            selectedEvent = TextEvent.CreateFromIndex(_index, true, false);
         }
     }
 }

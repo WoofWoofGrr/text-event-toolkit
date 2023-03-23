@@ -33,7 +33,7 @@ namespace DevonMillar.TextEvents
             List<System.Func<object>> actionMethods = new();
             System.Threading.Thread actionParseThread;
 
-            public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<MethodNameAndArgs> _resultActions)
+            public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<MethodNameAndArgs> _resultActions, bool _createDefaultChoice = true)
             {
                 ActionMethodNamesAndArgs = new();
                 Choices = new();
@@ -48,9 +48,10 @@ namespace DevonMillar.TextEvents
                 }
                 Text = _text;
                 Chance = chance ?? 100.0f;
-                if (!IsFinal)
+
+                if (_createDefaultChoice && !IsFinal && Choices.Count == 0)
                 {
-                    Choices.Add(Serializer.CreateChoice(Choice.CreateDefaultChoiceNode()));
+                    Choices.Add(Serializer.CreateChoice(Choice.CreateDefaultChoiceNode(), true));
                 }
 
                 //this is really really slow so do it on it's own thread, hopefully it's done by the time the player is finished reading so there will be no lag

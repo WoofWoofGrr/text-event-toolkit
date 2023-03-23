@@ -28,7 +28,7 @@ namespace DevonMillar.TextEvents
             return Serializer.CreateEvent(node);
         }
 
-        public static TextEvent CreateFromIndex(int _index, bool allowBanned = false)
+        public static TextEvent CreateFromIndex(int _index, bool allowBanned = false, bool _createDefaultChoices = true)
         {
             XElement eventNode;
             eventNode = Serializer.GetNode(_index);
@@ -38,7 +38,7 @@ namespace DevonMillar.TextEvents
                 return null;
             }
             
-            return Serializer.CreateEvent(eventNode);
+            return Serializer.CreateEvent(eventNode, _createDefaultChoices);
         }
 
         public List<Choice> Choices { get; private set; } = new List<Choice>();

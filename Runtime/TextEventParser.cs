@@ -74,30 +74,30 @@ namespace DevonMillar.TextEvents
         }
 
         //given an XML element, create and return a Choice for any result element the element contains
-        public static IEnumerable<TextEvent.Choice> ExtractChoices(XElement _element)
+        public static IEnumerable<TextEvent.Choice> ExtractChoices(XElement _element, bool _createDefaultChoice)
         {
             List<XElement> choiceNodes = _element.Elements("Choice").ToList();
             List<TextEvent.Choice> choices = new();
 
             //create default choice if the event has none
-            if (choiceNodes.Count() == 0)
+            if (choiceNodes.Count() == 0 && _createDefaultChoice)
             {
                 choiceNodes.Add(TextEvent.Choice.CreateDefaultChoiceNode());
             }
 
             //create a choice for each choice node and return the list
-            return choiceNodes.Select(e => CreateChoice(e));
+            return choiceNodes.Select(e => CreateChoice(e, _createDefaultChoice));
         }
 
         //given an XML element, create and return a Result for any result element the element contains
-        public static IEnumerable<TextEvent.Result> ExtractResults(XElement _element)
+        public static IEnumerable<TextEvent.Result> ExtractResults(XElement _element, bool _createDefaultChoices)
         {
             //add the results to the choice
-            return _element.Elements("Result").Select(e => CreateResult(e));
+            return _element.Elements("Result").Select(e => CreateResult(e, _createDefaultChoices));
         }
 
         //deserialize an event and it's choices and results
-        public static TextEvent CreateEvent(XElement _eventNode)
+        public static TextEvent CreateEvent(XElement _eventNode, bool _createDefaultChoices = true)
         {
             if (_eventNode == null)
             {
@@ -114,22 +114,22 @@ namespace DevonMillar.TextEvents
                 _title: _eventNode.Attribute("title")?.Value,
                 _text: _eventNode.Attribute("text")?.Value,
                 _id: ID,
-                _result: ExtractResults(_eventNode).FirstOrDefault(),
-                _choices: ExtractChoices(_eventNode),
+                _result: ExtractResults(_eventNode, _createDefaultChoices).FirstOrDefault(),
+                _choices: ExtractChoices(_eventNode, _createDefaultChoices),
                 _label: label
                 );
         }
 
         //deserialize a choice and it's results
-        public static TextEvent.Choice CreateChoice(XElement _choiceNode)
+        public static TextEvent.Choice CreateChoice(XElement _choiceNode, bool _createDefaultChoice)
         {
             string choiceText = _choiceNode.Attribute("text").Value;
             string choicePostText = _choiceNode.Attribute("postText")?.Value ?? "";
-            return new TextEvent.Choice(choiceText, ExtractResults(_choiceNode), choicePostText);
+            return new TextEvent.Choice(choiceText, ExtractResults(_choiceNode, _createDefaultChoice), choicePostText);
         }
 
         //deserialize a result
-        public static TextEvent.Result CreateResult(XElement _resultNode)
+        public static TextEvent.Result CreateResult(XElement _resultNode, bool _createDefaultChoices = true)
         {
             string text = _resultNode.Attribute("text").Value;
             float? chance = Serializer.ParseResultChance(_resultNode);
@@ -168,7 +168,7 @@ namespace DevonMillar.TextEvents
                 resultActions.Add(new MethodNameAndArgs(methodName, args));
             }
 
-            return new TextEvent.Result(text, chance, ExtractChoices(_resultNode), resultActions);
+            return new TextEvent.Result(text, chance, ExtractChoices(_resultNode, _createDefaultChoices), resultActions, _createDefaultChoices);
         }
 
 #if UNITY_EDITOR
