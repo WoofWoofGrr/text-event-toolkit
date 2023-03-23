@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace DevonMillar.TextEvents
 {
+    [System.Serializable]
     public class MethodNameAndArgs
     {
         public string Name { get; set;}
@@ -29,7 +30,7 @@ namespace DevonMillar.TextEvents
             public void AddChoice(Choice _newChoice) => Choices.Add(_newChoice);
             public void RemoveChoice(Choice _choiceToRemove) => Choices.Remove(_choiceToRemove);
 
-            List<System.Action> actionMethods = new();
+            List<System.Func<object>> actionMethods = new();
             System.Threading.Thread actionParseThread;
 
             public Result(string _text, float? chance, IEnumerable<TextEvent.Choice> _choices, IEnumerable<MethodNameAndArgs> _resultActions)
@@ -71,12 +72,15 @@ namespace DevonMillar.TextEvents
             }
 
             //run all the actions the result contains
-            public void Execute()
+            public List<object> Execute()
             {
+                List<object> returns = new();
+
                 //wait until the other thread has parsed the actions
                 actionParseThread.Join();
                 //run the actions once parsing them has finished
-                actionMethods.ForEach(method => method.Invoke());
+                actionMethods.ForEach(method => returns.Add(method.Invoke()));
+                return returns;
             }
         }
     }

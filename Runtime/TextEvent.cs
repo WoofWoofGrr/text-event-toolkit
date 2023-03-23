@@ -16,11 +16,16 @@ namespace DevonMillar.TextEvents
 
         public static void ForceExitAllEvents() => ForceExitEvents?.Invoke();
 
-        //TODO: use GetAllEventIDs
+        public static bool IsBanned (XElement node) => bannedEventIDs.Contains(node.Attribute("id").Value);
+
         public static TextEvent CreateRandom(bool allowBanned = false)
         {
-            //TODO: ban check
-            return Serializer.CreateEvent(Serializer.GetRandomNode(x => !bannedEventIDs.Contains(x.Attribute("id").Value)));
+            return Serializer.CreateEvent(Serializer.GetRandomNode(x => (allowBanned || !bannedEventIDs.Contains(x.Attribute("id").Value))));
+        }
+        public static TextEvent CreateRandomWithLabel(string _label, bool allowBanned = false)
+        {
+            XElement node = Serializer.GetRandomNode(node => node.Attribute("label").Value == _label && (allowBanned || !bannedEventIDs.Contains(node.Attribute("id").Value)));
+            return Serializer.CreateEvent(node);
         }
 
         public static TextEvent CreateFromIndex(int _index, bool allowBanned = false)
@@ -28,7 +33,7 @@ namespace DevonMillar.TextEvents
             XElement eventNode;
             eventNode = Serializer.GetNode(_index);
 
-            if (eventNode != null && !allowBanned && bannedEventIDs.Contains(eventNode.Attribute("id").Value))
+            if (eventNode != null && !allowBanned && IsBanned(eventNode))
             {
                 return null;
             }
@@ -40,6 +45,7 @@ namespace DevonMillar.TextEvents
         public void AddChoice(Choice _newChoice) => Choices.Add(_newChoice);
         public void RemoveChoice(Choice _choiceToRemove) => Choices.Remove(_choiceToRemove); public int ID { get; private set; }
         public string Title { get; set; }
+        public string Label { get; set; }
         public string Text { get; set; }
 
         private Result result;
@@ -47,13 +53,14 @@ namespace DevonMillar.TextEvents
         public event System.Action<TextEvent> OnTextEventExit;
         public event System.Action<Choice, Result> OnChoiceSelected;
 
-        public TextEvent(string _title, string _text, int _id, Result _result, IEnumerable<Choice> _choices)
+        public TextEvent(string _title, string _text, int _id, Result _result, IEnumerable<Choice> _choices, string _label = "")
         {
             Text = _text;
             Title = _title;
             result = _result;
             Choices = new ();
             ID = _id;
+            Label = _label;
             
             ForceExitEvents += ExitEvent;
 

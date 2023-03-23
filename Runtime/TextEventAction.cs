@@ -29,6 +29,7 @@ namespace DevonMillar.TextEvents
         {
             List<AtributeAndMethod> actionMethods = new();
 
+            //get all assemblies if _targetAssemblies is null, filtering out unity and system assemblies
             if (_targetAssemblies == null)
             {
                 _targetAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(e => !e.FullName.StartsWith("Unity") && !e.FullName.StartsWith("System.")).ToList();

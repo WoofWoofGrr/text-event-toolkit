@@ -20,20 +20,23 @@ namespace DevonMillar.TextEvents
         {
             object data = Resources.Load(fileName);
 
+#if UNITY_EDITOR
             if (data == null && Application.isEditor)
             {
                 CreateDataFile();
                 data = Resources.Load(fileName);
             }
-
+#endif
             textEventsData = XDocument.Parse(data.ToString());
 
             Debug.Log("Loaded text event XML data");
+#if UNITY_EDITOR
 
             if (textEventsData.Descendants("Event").Count() == 0)
             {
                 CreateFirstEvent();
             }
+#endif
         }
 
         public static IEnumerable<XElement> GetAllNodes(System.Func<XElement, bool> _predicate = null)
@@ -104,13 +107,16 @@ namespace DevonMillar.TextEvents
             }
 
             int ID = int.Parse(_eventNode.Attribute("id").Value);
+            string label = _eventNode.Attribute("label").Value;
+
 
             return new TextEvent(
                 _title: _eventNode.Attribute("title")?.Value,
                 _text: _eventNode.Attribute("text")?.Value,
                 _id: ID,
                 _result: ExtractResults(_eventNode).FirstOrDefault(),
-                _choices: ExtractChoices(_eventNode)
+                _choices: ExtractChoices(_eventNode),
+                _label: label
                 );
         }
 
@@ -186,7 +192,8 @@ namespace DevonMillar.TextEvents
                 new XElement("Event", 
                     new XAttribute("id", "0"),
                     new XAttribute("text", "New event text"), 
-                    new XAttribute("title", "New event title")
+                    new XAttribute("title", "New event title"),
+                    new XAttribute("label", "")
                     )
                 );
             SaveXML();
@@ -278,7 +285,8 @@ namespace DevonMillar.TextEvents
             element.ReplaceAttributes(
                 new XAttribute("id", _id),
                 new XAttribute("title", _event.Title),
-                new XAttribute("text", _event.Text)
+                new XAttribute("text", _event.Text),
+                new XAttribute("label", _event.Label)
                 );
 
             //remove all child elements 
@@ -289,9 +297,10 @@ namespace DevonMillar.TextEvents
             //add choices
             _event.Choices.ForEach(e => element.Add(SerializeChoice(e)));
 
+
             SaveXML();
 
-            return element.ElementsBeforeSelf().Count();//
+            return element.ElementsBeforeSelf().Count();
         }
 
         public static void WriteBody(int _index, string _bodyText)

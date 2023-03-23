@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_EDITOR
 namespace DevonMillar.TextEvents
 {
     public class TextEventEditor : EditorWindow
@@ -33,10 +34,18 @@ namespace DevonMillar.TextEvents
 
         void DrawEvent(TextEvent _event)
         {
-            GUILayout.Label("Event title");
-            _event.Title = EditorGUILayout.TextField(_event.Title);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Title");
+            GUILayout.Label("Label");
+            GUILayout.EndHorizontal();
 
-            GUILayout.Label("Event body");
+            GUILayout.BeginHorizontal();
+            _event.Title = EditorGUILayout.TextField(_event.Title);
+            _event.Label = EditorGUILayout.TextField(_event.Label);
+            GUILayout.EndHorizontal();
+
+
+            GUILayout.Label("Main body text");
             _event.Text = EditorGUILayout.TextArea(_event.Text, new GUIStyle(EditorStyles.textArea), GUILayout.Height(position.height / 5.0f));
 
             GUILayout.Label("Choices");
@@ -159,7 +168,7 @@ namespace DevonMillar.TextEvents
                     if (newIndex < 0)
                     {
                         EditorGUILayout.EndHorizontal();
-                        return;
+                        continue;
                     }
                     
                     //this was in if
@@ -203,7 +212,7 @@ namespace DevonMillar.TextEvents
 
             //draw result choices
 
-            object key = _result + " branching";
+            object key = _result.ToString() + _result.GetHashCode().ToString() + " branching";
             if (!storedToggles.ContainsKey(key))
             {
                 storedToggles.Add(key, false);
@@ -211,8 +220,15 @@ namespace DevonMillar.TextEvents
 
             GUILayout.Space(10.0f);
 
-            storedToggles[key] = EditorGUILayout.Toggle("Branching", storedToggles[key]);
-            
+            if (_result.Choices.Count == 0)
+            {
+                storedToggles[key] = EditorGUILayout.Toggle("Branching", storedToggles[key]);
+            }
+            else
+            {
+                storedToggles[key] = true;
+            }
+
             if (storedToggles[key])
             {
                 EditorGUILayout.LabelField("Choices");
@@ -234,7 +250,7 @@ namespace DevonMillar.TextEvents
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
-        //welcome to hell
+        //check a type and draw the appropriate feild
         object DrawArgField(System.Type _argType, object _val, string _label)
         {
             //there might be a better way to do this but I don't know any
@@ -295,12 +311,8 @@ namespace DevonMillar.TextEvents
             //
             string[] options = Serializer.GetAllEventTitlesWithID(true).ToArray();
 
-            if (GUILayout.Button("Create new event"))
-            {
-                selectedEvent = new TextEvent("New event", "", Serializer.HighestID + 1, null, null);
-                index = Serializer.SerializeEvent(selectedEvent);
-                ChangeEvent(index);
-            }
+
+            GUILayout.BeginHorizontal();
 
             if (options.Length == 0)
             {
@@ -312,9 +324,18 @@ namespace DevonMillar.TextEvents
             index,
             options
             );
+            if (GUILayout.Button("+", GUILayout.MaxWidth(35.0f)))
+            {
+                selectedEvent = new TextEvent("New event", "", Serializer.HighestID + 1, null, null);
+                newIndex = index = Serializer.SerializeEvent(selectedEvent);
+                ChangeEvent(index);
+            }
+            GUILayout.EndHorizontal();
 
             if (newIndex != index)
             {
+                Serializer.SerializeEvent(selectedEvent);
+
                 //load new event 
                 index = newIndex;
                 ChangeEvent(index);
@@ -335,14 +356,17 @@ namespace DevonMillar.TextEvents
 
             if (GUILayout.Button("Delete event"))
             {
-                Serializer.DeleteEvent(index);
-                if (index + 1 == options.Length)
+                if (EditorUtility.DisplayDialog("Delete event", "Are you sure you want to delete " + selectedEvent.Title + "?", "Delete", "Cancel"))
                 {
-                    index--;
-                }
-                if (index >= 0)
-                {
-                    ChangeEvent(index);
+                    Serializer.DeleteEvent(index);
+                    if (index + 1 == options.Length)
+                    {
+                        index--;
+                    }
+                    if (index >= 0)
+                    {
+                        ChangeEvent(index);
+                    }
                 }
             }
 
@@ -363,3 +387,4 @@ namespace DevonMillar.TextEvents
         }
     }
 }
+#endif
