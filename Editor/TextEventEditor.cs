@@ -242,9 +242,8 @@ namespace DevonMillar.TextEvents
                 }
 
                 GUILayout.EndHorizontal();
-                EditorGUI.indentLevel -= 2;
             }
-
+            EditorGUI.indentLevel -= 2;
 
             GUILayout.Space(30.0f);
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
