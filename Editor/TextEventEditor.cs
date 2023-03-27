@@ -187,7 +187,7 @@ namespace DevonMillar.TextEvents
                     {
                         if (_result.ActionMethodNamesAndArgs[i].Args[j] == null)
                         {
-                            _result.ActionMethodNamesAndArgs[i].Args[j] = methodParams[j].DefaultValue;
+                            _result.ActionMethodNamesAndArgs[i].Args[j] = methodParams[j].DefaultValue ?? default;
                         }
                         _result.ActionMethodNamesAndArgs[i].Args[j] = DrawArgField(methodParams[j].ParameterType, _result.ActionMethodNamesAndArgs[i].Args[j], methodParams[j].Name);
                     }
