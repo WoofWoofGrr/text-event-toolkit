@@ -3,7 +3,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-#if UNITY_EDITOR
 namespace DevonMillar.TextEvents
 {
     public class TextEventEditor : EditorWindow
@@ -386,4 +385,3 @@ namespace DevonMillar.TextEvents
         }
     }
 }
-#endif
