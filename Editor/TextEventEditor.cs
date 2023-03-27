@@ -169,15 +169,20 @@ namespace DevonMillar.TextEvents
                         EditorGUILayout.EndHorizontal();
                         continue;
                     }
+
+                    bool methodChanged = false;
                     
-                    //this was in if
-                    _result.ActionMethodNamesAndArgs[i].Name = availableActions[newIndex].method.Name;
+                    if (_result.ActionMethodNamesAndArgs[i].Name != availableActions[newIndex].method.Name)
+                    {
+                        _result.ActionMethodNamesAndArgs[i].Name = availableActions[newIndex].method.Name;
+                        methodChanged = true;
+                    }
 
                     var methodParams = availableActions[newIndex].method.GetParameters();
 
                     object[] resultActionArgs = new object[methodParams.Length];
 
-                    if (_result.ActionMethodNamesAndArgs[i].Args == null)
+                    if (_result.ActionMethodNamesAndArgs[i].Args == null || methodChanged)
                     {
                         _result.ActionMethodNamesAndArgs[i].Args = new object[methodParams.Length];
                     }
