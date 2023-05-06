@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Threading;
 using UnityEngine;
 using Object = System.Object;
 
@@ -140,9 +141,14 @@ namespace DevonMillar.TextEvents
             {
                 
             }
+            
             public void OnAfterDeserialize()
             {
-                UpdateActions();
+                //run on main thread
+                var mainThreadContext = SynchronizationContext.Current;
+                mainThreadContext.Post(state => {
+                    UpdateActions();
+                }, null);
             }
             //called by UI
             public void AcknowledgedResult()
