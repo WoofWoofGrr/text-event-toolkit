@@ -337,15 +337,15 @@ namespace DevonMillar.TextEvents
             }
             if (_argType == typeof(int))
             {
-               return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val));
+               return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val ?? default(int)));
             }
             if (_argType == typeof(float))
             {
-               return EditorGUILayout.FloatField(_label, (float)_val);
+               return EditorGUILayout.FloatField(_label, (float)(_val ?? default(float)));
             }
             if (_argType == typeof(bool))
             {
-               return EditorGUILayout.Toggle(_label, (bool)_val);
+               return EditorGUILayout.Toggle(_label, (bool)(_val ?? default(bool)));
             }
             if (_argType == typeof(string))
             {
@@ -353,7 +353,7 @@ namespace DevonMillar.TextEvents
             }
             if (_argType.IsEnum)
             {
-                object enumValue = (_val is DBNull) ? Enum.GetValues(_argType).GetValue(0) : Enum.Parse(_argType, _val.ToString());
+                object enumValue = (_val is DBNull or null) ? Enum.GetValues(_argType).GetValue(0) : Enum.Parse(_argType, _val.ToString());
                 return enumValue = EditorGUILayout.EnumPopup(enumValue as Enum);
 
                 //return EditorGUILayout.EnumPopup(_label, (System.Enum));
