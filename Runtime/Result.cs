@@ -101,6 +101,7 @@ namespace DevonMillar.TextEvents
             public void UpdateActions()
             {
                 //this is really really slow so do it on it's own thread, hopefully it's done by the time the player is finished reading so there will be no lag
+                TextEventToolkitSettings settings = TextEventToolkitSettings.Instance;
                 actionParseThread = new System.Threading.Thread(ParseActions);
                 actionParseThread.Start();
                 actionParseThread?.Join();
