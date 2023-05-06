@@ -75,11 +75,11 @@ namespace DevonMillar.TextEvents
         [System.Serializable]
         public class Result : ISerializationCallbackReceiver
         {
-            [field: SerializeField] public string Text { get; set; } = "New result";
+            [field: SerializeField] public string Text { get; set; }
             [field: SerializeField] public string AcknowledgmentText { get; set; } = TextEventToolkitSettings.Instance.DefaultAcknowledgmentText;
-            [field: SerializeField] public float Chance { get; set; } = 100.0f;
+            [field: SerializeField] public float Chance { get; set; }
 
-            [field: SerializeField] public List<SerializedMethodCall> ActionMethodNamesAndArgs { get; private set; } = new();
+            [field: SerializeField] public List<SerializedMethodCall> ActionMethodNamesAndArgs { get; private set; }
             public bool IsFinal => string.IsNullOrEmpty(Text);
 
             List<System.Func<object>> actionMethods;

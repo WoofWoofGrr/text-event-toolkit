@@ -125,7 +125,7 @@ namespace DevonMillar.TextEvents
             }
             GUILayout.BeginVertical(vertColorStyle);
 
-            DrawConditionalField(_choice.Condition, _choice.RemoveCondition);
+            DrawConditionalField(_choice.Condition, _choice.RemoveCondition, _choice.CreateCondition);
             
             //draw each possible result of this choice
             _choice.Results.ForEach(e => DrawResult(e, () => _choice.RemoveResult(e)));
@@ -143,36 +143,45 @@ namespace DevonMillar.TextEvents
             GUILayout.EndVertical();
         }
 
-        void DrawConditionalField(SerializedMethodCall _call, System.Action _removeCondition)
+        void DrawConditionalField(SerializedMethodCall _call, System.Action _removeCondition, System.Func<SerializedMethodCall> _createCondition)
         {
             if (availablePredicates == null || !availablePredicates.Any())
                 return;
             
-            int newIndex = System.Array.IndexOf(availablePredicates.Select(e => e.method.Name).ToArray(), _call.Name);
+            int conditionIndex = -1;
+            if (_call != null)
+            {
+                conditionIndex = Array.IndexOf(availablePredicates.Select(e => e.method.Name).ToArray(), _call.Name);
+            }
 
             EditorGUILayout.BeginHorizontal();
-            newIndex = EditorGUILayout.Popup(
+            conditionIndex = EditorGUILayout.Popup(
             "Condition:",
-            newIndex,
+            conditionIndex,
             availablePredicates.Select(e => e.attribute.Name).ToArray()
             );
                 
-            if (newIndex < 0)
+            if (conditionIndex < 0)
             {
                 EditorGUILayout.EndHorizontal();
                 return;
             }
 
+            if (_call == null)
+            {
+                _call = _createCondition();
+            }
+            
             bool methodChanged = false;
                 
-            if (_call.Name != availablePredicates[newIndex].method.Name)
+            if (_call.Name != availablePredicates[conditionIndex].method.Name)
             {
-                _call.Name = availablePredicates[newIndex].method.Name;
+                _call.Name = availablePredicates[conditionIndex].method.Name;
                 methodChanged = true;
             }
             
                 
-            ParameterInfo[] methodParams = availablePredicates[newIndex].method.GetParameters();
+            ParameterInfo[] methodParams = availablePredicates[conditionIndex].method.GetParameters();
             methodChanged = methodChanged || _call.Args.Length != methodParams.Length;
 
             object[] resultActionArgs = new object[methodParams.Length];
@@ -204,10 +213,6 @@ namespace DevonMillar.TextEvents
                 
             GUILayout.BeginHorizontal();
             GUILayout.Space(15.0f * EditorGUI.indentLevel);
-            if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
-            {
-                _call = new SerializedMethodCall("", null);
-            }
             GUILayout.EndHorizontal();
         }
         

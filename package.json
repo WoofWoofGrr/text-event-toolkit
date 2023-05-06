@@ -1,6 +1,6 @@
 {
     "name": "com.devonmillar.texteventtoolkit",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "displayName": "Text Event Toolkit",
     "description": "A set of tools for creating text events in Unity",
     "unity": "2021.3",

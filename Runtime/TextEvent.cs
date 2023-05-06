@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Xml.Linq;
 using System.Linq;
 using System.Reflection;
 using static DevonMillar.TextEvents.TextEvent;
@@ -16,9 +15,7 @@ namespace DevonMillar.TextEvents
 
         public static void ForceExitAllEvents() => ForceExitEvents?.Invoke();
 
-        public static bool IsBanned (XElement node) => bannedEventIDs.Contains(node.Attribute("id").Value);
-        
-        public List<Choice> Choices { get; private set; } = new List<Choice>();
+        public List<Choice> Choices { get; private set; }
         public void AddChoice(Choice _newChoice) => Choices.Add(_newChoice);
         public void RemoveChoice(Choice _choiceToRemove) => Choices.Remove(_choiceToRemove); 
         public int ID { get; private set; }
@@ -48,8 +45,7 @@ namespace DevonMillar.TextEvents
                 List<MethodInfo> methods = TextEventPredicate.GetAll().Select(e => e.method).ToList();;
 
                 Choices.AddRange(_choices.Where(e => !e.Condition.IsValid ||  (bool) e.Condition.GetMethodInfo(methods).
-                                                                                      Invoke(null, e.Condition.Args.Select(argAndType => argAndType.arg).ToArray())
-                                                                              ));
+                                                                                      Invoke(null, e.Condition.Args.Select(argAndType => argAndType.arg).ToArray())));
             }
 
             SubscribeToChoiceEvents(Choices);
@@ -70,10 +66,7 @@ namespace DevonMillar.TextEvents
             OnAnyTextEventEnter?.Invoke(this);
             OnTextEventEnter?.Invoke();
 
-            if (result != null)
-            {
-                result.Execute();
-            }
+            result?.Execute();
         }
         public void ExitEvent()
         {

@@ -16,18 +16,11 @@ namespace DevonMillar.TextEvents
             [field: SerializeField] public string PostText { get; private set; }
             [field: SerializeField] public List<Result> Results { get; private set; }
             [field: SerializeField]
-            public SerializedMethodCall Condition { get; private set; } = null;
+            public SerializedMethodCall Condition { get; private set; } = new("", null);
             
             public event System.Action<Choice, Result> OnChoiceSelected;
             public event System.Action<Choice, Result> OnFinalChoice;
-
-            public static XElement CreateDefaultChoiceNode()
-            {
-                XElement e = new XElement("Choice");
-                e.SetAttributeValue("text", "Continue...");
-                return e;
-            }
-
+            
             public Choice(string _text, IEnumerable<Result> _results, string _postText = "")
             {
                 Text = _text;
@@ -51,6 +44,10 @@ namespace DevonMillar.TextEvents
             public void RemoveResult(Result _result)
             {
                 Results.Remove(_result);
+            }
+            public void RemoveCondition()
+            {
+                Condition = null;
             }
 
             public Result Pick()
@@ -109,6 +106,10 @@ namespace DevonMillar.TextEvents
                 }
 
                 return s;
+            }
+            public SerializedMethodCall CreateCondition()
+            {
+               return Condition = new("", null);
             }
         }
     }
