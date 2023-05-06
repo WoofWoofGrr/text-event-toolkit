@@ -536,6 +536,11 @@ namespace DevonMillar.TextEvents
             // Create a new instance of the ScriptableObject
             TextEventData newObj = CreateInstance<TextEventData>();
             newObj.BanAfterUse = TextEventToolkitSettings.Instance.BanByDefault;
+            if (TextEventToolkitSettings.Instance.DefaultFirstLabel && TextEventToolkitSettings.Instance.Labels is {Count: >  0})
+            {
+                newObj.Labels.Add(TextEventToolkitSettings.Instance.Labels.First());
+            }
+
             // Create a new asset file for the ScriptableObject
              
             if (!Directory.Exists(FilePaths.TextEventPath))
