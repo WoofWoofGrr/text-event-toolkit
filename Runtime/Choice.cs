@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Xml;
 using System.Linq;
 using System.Xml.Linq;
+using Random = UnityEngine.Random;
 
 namespace DevonMillar.TextEvents
 {
@@ -57,21 +59,29 @@ namespace DevonMillar.TextEvents
                 {
                     chosenResult = Results.First();
 
+                    //if there are multiple results, pick one based on their chance
                     if (Results.Count > 1)
                     {
-                        float totalChance = Results.Sum(result => result.Chance);
-                        float roll = Random.Range(0, totalChance);
-
-                        //pick a random result based on the chance weightings
-                        foreach (Result result in Results)
+                        float[] cdf = new float[Results.Count];
+                        float sum = 0.0f;
+                        for (int i = 0; i < Results.Count; i++)
                         {
-                            roll -= result.Chance;
-                            if (roll <= 0.0f)
-                            {
-                                chosenResult = result;
-                                break;
-                            }
+                            sum += Results[i].Chance;
+                            cdf[i] = sum;
                         }
+
+                        float roll = Random.value;
+                        int chosenIndex = Array.BinarySearch(cdf, roll);
+                        if (chosenIndex < 0)
+                        {
+                            chosenIndex = ~chosenIndex;
+                        }
+                        if (chosenIndex >= Results.Count)
+                        {
+                            chosenIndex = Results.Count - 1;
+                        }
+                        chosenResult = Results[chosenIndex];
+
                     }
 
                     chosenResult.Execute();
