@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Xml.Linq;
 using System.Linq;
+using System.Reflection;
 using static DevonMillar.TextEvents.TextEvent;
 
 namespace DevonMillar.TextEvents
@@ -44,7 +45,11 @@ namespace DevonMillar.TextEvents
 
             if (_choices != null)
             {
-                Choices.AddRange(_choices);
+                List<MethodInfo> methods = TextEventPredicate.GetAll().Select(e => e.method).ToList();;
+
+                Choices.AddRange(_choices.Where(e => !e.Condition.IsValid ||  (bool) e.Condition.GetMethodInfo(methods).
+                                                                                      Invoke(null, e.Condition.Args.Select(argAndType => argAndType.arg).ToArray())
+                                                                              ));
             }
 
             SubscribeToChoiceEvents(Choices);

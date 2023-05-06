@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace DevonMillar.TextEvents
 
         Color[] indentColors;
         List<TextEventAction.AttributeAndMethod> availableActions;
+        List<TextEventAction.AttributeAndMethod> availablePredicates;
 
         [MenuItem("Tools/Text Event Editor")]
         public static void ShowWindow()
@@ -116,12 +118,15 @@ namespace DevonMillar.TextEvents
 
             GUILayout.EndHorizontal();
 
+            //stop here if not folded out
             if (!foldouts[_choice])
             {
                 return;
             }
             GUILayout.BeginVertical(vertColorStyle);
 
+            DrawConditionalField(_choice.Condition, _choice.RemoveCondition);
+            
             //draw each possible result of this choice
             _choice.Results.ForEach(e => DrawResult(e, () => _choice.RemoveResult(e)));
 
@@ -138,6 +143,74 @@ namespace DevonMillar.TextEvents
             GUILayout.EndVertical();
         }
 
+        void DrawConditionalField(SerializedMethodCall _call, System.Action _removeCondition)
+        {
+            if (availablePredicates == null || !availablePredicates.Any())
+                return;
+            
+            int newIndex = System.Array.IndexOf(availablePredicates.Select(e => e.method.Name).ToArray(), _call.Name);
+
+            EditorGUILayout.BeginHorizontal();
+            newIndex = EditorGUILayout.Popup(
+            "Condition:",
+            newIndex,
+            availablePredicates.Select(e => e.attribute.Name).ToArray()
+            );
+                
+            if (newIndex < 0)
+            {
+                EditorGUILayout.EndHorizontal();
+                return;
+            }
+
+            bool methodChanged = false;
+                
+            if (_call.Name != availablePredicates[newIndex].method.Name)
+            {
+                _call.Name = availablePredicates[newIndex].method.Name;
+                methodChanged = true;
+            }
+            
+                
+            ParameterInfo[] methodParams = availablePredicates[newIndex].method.GetParameters();
+            methodChanged = methodChanged || _call.Args.Length != methodParams.Length;
+
+            object[] resultActionArgs = new object[methodParams.Length];
+
+            if (_call.Args == null || methodChanged)
+            {
+                _call.Args = new SerializedMethodCall.ArgAndType[methodParams.Length];
+            }
+
+            //loop over the parameters of the selected action method and draw the respective filed for them
+            for (int j = 0; j < methodParams.Length; j++)
+            {
+                if (_call.Args[j] == null)
+                {
+                    _call.Args[j] = new SerializedMethodCall.ArgAndType()
+                    {
+                        arg = methodParams[j].DefaultValue != DBNull.Value ? methodParams[j].DefaultValue :  Activator.CreateInstance(methodParams[j].ParameterType),
+                        type = methodParams[j].ParameterType,
+                    };
+                }
+                _call.Args[j].arg = DrawArgField(methodParams[j].ParameterType, _call.Args[j].arg, methodParams[j].Name);
+            }
+
+            if (GUILayout.Button("-", GUILayout.MaxWidth(35)))
+            {
+                _removeCondition();
+            }
+            EditorGUILayout.EndHorizontal();
+                
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(15.0f * EditorGUI.indentLevel);
+            if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
+            {
+                _call = new SerializedMethodCall("", null);
+            }
+            GUILayout.EndHorizontal();
+        }
+        
         void DrawResult(TextEvent.Result _result, System.Action _deleteAction)
         {
             GUILayout.Space(40);
@@ -207,7 +280,7 @@ namespace DevonMillar.TextEvents
 
                     if (_result.ActionMethodNamesAndArgs[i].Args == null || methodChanged)
                     {
-                        _result.ActionMethodNamesAndArgs[i].Args = new MethodNameAndArgs.ArgAndType[methodParams.Length];
+                        _result.ActionMethodNamesAndArgs[i].Args = new SerializedMethodCall.ArgAndType[methodParams.Length];
                     }
 
                     //loop over the parameters of the selected action method and draw the respective feild for them
@@ -215,7 +288,7 @@ namespace DevonMillar.TextEvents
                     {
                         if (_result.ActionMethodNamesAndArgs[i].Args[j] == null)
                         {
-                            _result.ActionMethodNamesAndArgs[i].Args[j] = new MethodNameAndArgs.ArgAndType()
+                            _result.ActionMethodNamesAndArgs[i].Args[j] = new SerializedMethodCall.ArgAndType()
                             {
                                 arg = methodParams[j].DefaultValue ?? default,
                                 type = methodParams[j].ParameterType,
@@ -237,7 +310,7 @@ namespace DevonMillar.TextEvents
                 GUILayout.Space(15.0f * EditorGUI.indentLevel);
                 if (GUILayout.Button("Add action", GUILayout.MaxWidth(100)))
                 {
-                    _result.ActionMethodNamesAndArgs.Add(new MethodNameAndArgs("", null));
+                    _result.ActionMethodNamesAndArgs.Add(new SerializedMethodCall("", null));
                 }
                 GUILayout.EndHorizontal();
             }
@@ -246,6 +319,10 @@ namespace DevonMillar.TextEvents
         //check a type and draw the appropriate field
         object DrawArgField(System.Type _argType, object _val, string _label)
         {
+            if (_val == DBNull.Value)
+            {
+                _val = default(object);
+            }
             if (_argType == typeof(int))
             {
                return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val));
@@ -279,6 +356,8 @@ namespace DevonMillar.TextEvents
         void GetActions()
         {
             availableActions = TextEventAction.GetAll();
+            availablePredicates = TextEventPredicate.GetAll();
+            
         }
 
         private void OnEnable()

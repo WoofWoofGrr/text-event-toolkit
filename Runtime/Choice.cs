@@ -16,7 +16,7 @@ namespace DevonMillar.TextEvents
             [field: SerializeField] public string PostText { get; private set; }
             [field: SerializeField] public List<Result> Results { get; private set; }
             [field: SerializeField]
-            public MethodNameAndArgs Condition { get; private set; }
+            public SerializedMethodCall Condition { get; private set; } = null;
             
             public event System.Action<Choice, Result> OnChoiceSelected;
             public event System.Action<Choice, Result> OnFinalChoice;

@@ -10,16 +10,19 @@ using Object = System.Object;
 namespace DevonMillar.TextEvents
 {
     [System.Serializable]
-    public class MethodNameAndArgs : ISerializationCallbackReceiver
+    public class SerializedMethodCall : ISerializationCallbackReceiver
     {
         [field: SerializeField] public string Name { get; set;}
         [SerializeField] public string argsJson;
         public ArgAndType[] Args { get; set; }
+        
+        public bool IsValid => !string.IsNullOrEmpty(Name) && Args != null;
 
         public MethodInfo GetMethodInfo(IEnumerable<MethodInfo> _methods)
         {
-            return _methods.Where(e => e.Name == Name).Select(e => e).First();
+            return _methods.Where(e => e.Name == Name).Select(e => e).FirstOrDefault();
         }
+        //args as object and it's type so we can serialize it and parse it back to the same object
         [System.Serializable]
         public class ArgAndType
         {
@@ -33,7 +36,7 @@ namespace DevonMillar.TextEvents
         }
 
         
-        public MethodNameAndArgs(string _name, params ArgAndType[] _args)
+        public SerializedMethodCall(string _name, params ArgAndType[] _args)
         {
             Name = _name;
             Args = _args;
@@ -50,6 +53,9 @@ namespace DevonMillar.TextEvents
         public void OnAfterDeserialize()
         {
             Args = JsonConvert.DeserializeObject<ArgAndType[]>(argsJson);
+            if (Args == null) 
+                return;
+            
             foreach (ArgAndType argAndType in Args)
             {
                 if (argAndType.type.IsEnum)
@@ -73,7 +79,7 @@ namespace DevonMillar.TextEvents
             [field: SerializeField] public string AcknowledgmentText { get; set; } = TextEventToolkitSettings.Instance.DefaultAcknowledgmentText;
             [field: SerializeField] public float Chance { get; set; } = 100.0f;
 
-            [field: SerializeField] public List<MethodNameAndArgs> ActionMethodNamesAndArgs { get; private set; } = new();
+            [field: SerializeField] public List<SerializedMethodCall> ActionMethodNamesAndArgs { get; private set; } = new();
             public bool IsFinal => string.IsNullOrEmpty(Text);
 
             List<System.Func<object>> actionMethods;
@@ -81,7 +87,7 @@ namespace DevonMillar.TextEvents
 
             public event System.Action OnResultAcknowledged; 
             
-            public Result(string _text, float? chance, IEnumerable<MethodNameAndArgs> _resultActions, bool _createDefaultChoice = true)
+            public Result(string _text, float? chance, IEnumerable<SerializedMethodCall> _resultActions, bool _createDefaultChoice = true)
             {
                 ActionMethodNamesAndArgs = new();
 
@@ -107,7 +113,7 @@ namespace DevonMillar.TextEvents
             void ParseActions()
             {
                 List<MethodInfo> methods = TextEventAction.GetAll().Select(e => e.method).ToList();
-                foreach (MethodNameAndArgs methodNameAndArgs in ActionMethodNamesAndArgs)
+                foreach (SerializedMethodCall methodNameAndArgs in ActionMethodNamesAndArgs)
                 {
                     MethodInfo method = methodNameAndArgs.GetMethodInfo(methods);
                     
