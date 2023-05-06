@@ -349,7 +349,7 @@ namespace DevonMillar.TextEvents
             }
             if (_argType == typeof(string))
             {
-                return EditorGUILayout.TextField(_label, _val.ToString());
+                return EditorGUILayout.TextField(_label, _val?.ToString() ?? "");
             }
             if (_argType.IsEnum)
             {
@@ -404,7 +404,7 @@ namespace DevonMillar.TextEvents
                 EditorUtility.SetDirty(selectedEvent);
             }
             
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true);
+            scrollPos = GUILayout.BeginScrollView(scrollPos, false, true);
 
             // Set the padding for the scrollable area
             const int padding = 20;
