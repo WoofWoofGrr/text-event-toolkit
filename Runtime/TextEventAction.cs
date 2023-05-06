@@ -28,17 +28,24 @@ namespace DevonMillar.TextEvents
     public class TextEventAction : TextEventAttribute
     {
         //return a list of all public methods decorated with the TextEventAction attribute in _targetAssemblies, if null, check all non UnityEngine assemblies
-        public static List<AttributeAndMethod> GetAll(List<Assembly> _targetAssemblies = null)
+        public static List<AttributeAndMethod> GetAll()
         {
             List<AttributeAndMethod> actionMethods = new();
 
+            List<Assembly> targetAssemblies = null;
             //get all assemblies if _targetAssemblies is null, filtering out unity and system assemblies
-            if (_targetAssemblies == null)
+            if (string.IsNullOrEmpty(TextEventToolkitSettings.Instance.ActionAssembly))
             {
-                _targetAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(e => !e.FullName.StartsWith("Unity") && !e.FullName.StartsWith("System.")).ToList();
-
+                targetAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(e => !e.FullName.StartsWith("Unity") && !e.FullName.StartsWith("System.")).ToList();
             }
-            foreach (Assembly assembly in _targetAssemblies) 
+            else
+            {
+                targetAssemblies = new()
+                {
+                    Assembly.Load(TextEventToolkitSettings.Instance.ActionAssembly),
+                };
+            }
+            foreach (Assembly assembly in targetAssemblies) 
             {
                 Type[] types = assembly.GetTypes();
                 
@@ -68,17 +75,25 @@ namespace DevonMillar.TextEvents
     public class TextEventPredicate : TextEventAttribute
     {
         //return a list of all public methods decorated with the TextEventPredicate attribute in _targetAssemblies, if null, check all non UnityEngine assemblies
-        public static List<AttributeAndMethod> GetAll(List<Assembly> _targetAssemblies = null)
+        public static List<AttributeAndMethod> GetAll()
         {
             List<AttributeAndMethod> predicates = new();
 
+            List<Assembly> targetAssemblies = null;
             //get all assemblies if _targetAssemblies is null, filtering out unity and system assemblies
-            if (_targetAssemblies == null)
+            if (string.IsNullOrEmpty(TextEventToolkitSettings.Instance.PredicateAssembly))
             {
-                _targetAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(e => !e.FullName.StartsWith("Unity") && !e.FullName.StartsWith("System.")).ToList();
-
+                targetAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(e => !e.FullName.StartsWith("Unity") && !e.FullName.StartsWith("System.")).ToList();
             }
-            foreach (Assembly assembly in _targetAssemblies) 
+            else
+            {
+                targetAssemblies = new()
+                {
+                    Assembly.Load(TextEventToolkitSettings.Instance.PredicateAssembly),
+                };
+            }
+            
+            foreach (Assembly assembly in targetAssemblies) 
             {
                 Type[] types = assembly.GetTypes();
                 

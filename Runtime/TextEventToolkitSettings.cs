@@ -30,11 +30,14 @@ namespace DevonMillar.TextEvents
             }
         }
 
-        [field: SerializeField] public Assembly ActionAssembly { get; set; }
         [field: SerializeField] public LogLevel LoggingLevel { get; set; }
         [field: SerializeField] public string DefaultAcknowledgmentText { get; set; } = "Continue...";
         [field: SerializeField] public bool DefaultFirstLabel { get; set; } = true;
         [field: SerializeField] public bool BanByDefault { get; set; } = false;
         [field: SerializeField] public List<string> Labels { get; set; }
+        
+        [field: SerializeField] public string ActionAssembly { get; set; }
+        [field: SerializeField] public string PredicateAssembly { get; set; }
+        
     }
 }
