@@ -399,7 +399,7 @@ namespace DevonMillar.TextEvents
 
         private void OnGUI()
         {
-            if (selectedEvent != null)
+            if (selectedEvent != null && GUI.changed)
             {
                 EditorUtility.SetDirty(selectedEvent);
             }
@@ -409,7 +409,7 @@ namespace DevonMillar.TextEvents
             // Set the padding for the scrollable area
             const int padding = 20;
             Rect paddingRect = new Rect(padding, padding, position.width - padding * 2, position.height - padding * 2);
-            GUILayout.BeginArea(paddingRect);
+            //GUILayout.BeginArea(paddingRect);
             
             textAreaStyle = new GUIStyle(EditorStyles.textArea);
             textAreaStyle.wordWrap = true;
@@ -526,7 +526,7 @@ namespace DevonMillar.TextEvents
             GUILayout.EndVertical();
 
             EditorGUILayout.EndScrollView();
-            GUILayout.EndArea();
+            //GUILayout.EndArea();
 
             while (workQueue.Any()) workQueue.Dequeue().Invoke();
         }
