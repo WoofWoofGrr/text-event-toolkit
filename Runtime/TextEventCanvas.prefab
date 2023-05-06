@@ -791,6 +791,7 @@ MonoBehaviour:
   titleText: {fileID: 5193194547601999350}
   bodyText: {fileID: 5193194548377527271}
   choiceContainer: {fileID: 5193194548105484927}
+  image: {fileID: 5193194548124613972}
   debugMode: 0
 --- !u!1 &8744732005849426022
 GameObject:

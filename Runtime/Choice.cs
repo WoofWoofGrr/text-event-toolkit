@@ -12,10 +12,12 @@ namespace DevonMillar.TextEvents
         [System.Serializable]
         public class Choice
         {
-            public List<Result> Results { get; private set; }
-            public string Text { get; set; }
-
-            public string PostText { get; private set; }
+            [field: SerializeField] public string Text { get; set; }
+            [field: SerializeField] public string PostText { get; private set; }
+            [field: SerializeField] public List<Result> Results { get; private set; }
+            [field: SerializeField]
+            public MethodNameAndArgs Condition { get; private set; }
+            
             public event System.Action<Choice, Result> OnChoiceSelected;
             public event System.Action<Choice, Result> OnFinalChoice;
 
@@ -35,6 +37,11 @@ namespace DevonMillar.TextEvents
                 {
                     Results.AddRange(_results);
                 }
+            }
+            public Choice()
+            {
+                Text = "New choice";
+                Results = new();
             }
 
             public void AddResult(Result _newResult)
@@ -79,16 +86,10 @@ namespace DevonMillar.TextEvents
                     OnFinalChoice?.Invoke(this, chosenResult);
                     OnFinalChoice = null;
                 }
-                else if (chosenResult != null) //has result but not final result
+                else
                 {
-                    //pass final choice up the stack
-                    chosenResult.Choices.ForEach(choice => choice.OnFinalChoice += (_choice, _result) =>
-                    {
-                        OnFinalChoice?.Invoke(_choice, _result);
-                        OnFinalChoice = null;
-                    });
+                    chosenResult.OnResultAcknowledged += () => OnFinalChoice?.Invoke(this, chosenResult);
                 }
-
                 OnChoiceSelected = null;
                 return chosenResult;
             }

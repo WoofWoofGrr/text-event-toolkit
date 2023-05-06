@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -9,7 +11,8 @@ namespace DevonMillar.TextEvents
     {
         [SerializeField] int index = 0;
 
-        TextEvent selectedEvent = null;
+        TextEventData selectedEvent = null;
+        List<TextEventData> AvailableEvents  => TextEventData.AllEventDatas;
         GUIStyle textAreaStyle;
 
         static System.Action OnReload;
@@ -18,7 +21,7 @@ namespace DevonMillar.TextEvents
         Dictionary<object, bool> storedToggles = new();
 
         Color[] indentColors;
-        List<TextEventAction.AtributeAndMethod> availableActions;
+        List<TextEventAction.AttributeAndMethod> availableActions;
 
         [MenuItem("Tools/Text Event Editor")]
         public static void ShowWindow()
@@ -31,22 +34,33 @@ namespace DevonMillar.TextEvents
             ChangeEvent(index);
         }
 
-        void DrawEvent(TextEvent _event)
+        void DrawEvent(TextEventData _event)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Title");
-            GUILayout.Label("Label");
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             _event.Title = EditorGUILayout.TextField(_event.Title);
-            _event.Label = EditorGUILayout.TextField(_event.Label);
             GUILayout.EndHorizontal();
 
 
             GUILayout.Label("Main body text");
             _event.Text = EditorGUILayout.TextArea(_event.Text, new GUIStyle(EditorStyles.textArea), GUILayout.Height(position.height / 5.0f));
 
+            _event.Image = EditorGUILayout.ObjectField(_event.Image, typeof(Sprite), false) as Sprite;
+            
+            if (_event.Image != null)
+            {
+                //calculate aspect ratio
+                float aspectRatio = _event.Image.texture.width / _event.Image.texture.height;
+                
+                int width = Mathf.Min(_event.Image.texture.width, 300);
+                int height = (int) (width / aspectRatio);
+
+                GUILayout.Label(_event.Image.texture, GUILayout.Width(width), GUILayout.Height(height));
+            }
+            
             GUILayout.Label("Choices");
 
             DrawAllChoices(_event.Choices, (choice) => _event.Choices.Remove(choice));
@@ -117,7 +131,7 @@ namespace DevonMillar.TextEvents
 
             if (GUILayout.Button("Add result", GUILayout.MaxWidth(100)))
             {
-                _choice.AddResult(new TextEvent.Result("", null, null, null, false));
+                _choice.AddResult(new TextEvent.Result("New result", null, null, false));
             }
 
             GUILayout.EndHorizontal();
@@ -126,7 +140,7 @@ namespace DevonMillar.TextEvents
 
         void DrawResult(TextEvent.Result _result, System.Action _deleteAction)
         {
-            EditorGUI.indentLevel += 2;
+            GUILayout.Space(40);
             GUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Result");
             if (GUILayout.Button("Delete result", GUILayout.MaxWidth(100)))
@@ -136,16 +150,25 @@ namespace DevonMillar.TextEvents
             }
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Text");
+            EditorGUILayout.LabelField("Result text");
             EditorGUILayout.LabelField("Chance");
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            
+            GUIStyle textFieldStyle = new GUIStyle(EditorStyles.textArea);
+            textFieldStyle.wordWrap = true;
+            GUILayoutOption[] resultTextField = { GUILayout.Height(50) };
+            _result.Text = EditorGUILayout.TextField(_result.Text, textFieldStyle, resultTextField);
 
-            _result.Text = EditorGUILayout.TextField(_result.Text);
             _result.Chance = EditorGUILayout.FloatField(_result.Chance);
             GUILayout.EndHorizontal();
 
+            EditorGUILayout.LabelField("Acknowledgment Text");
+            EditorGUILayout.BeginHorizontal();
+            GUILayoutOption[] halfWidth = { GUILayout.Width(EditorGUIUtility.currentViewWidth / 2f) };
+            _result.AcknowledgmentText = EditorGUILayout.TextField(_result.AcknowledgmentText, halfWidth);
+            EditorGUILayout.EndHorizontal();
 
             if (availableActions.Count > 0)
             {
@@ -184,7 +207,7 @@ namespace DevonMillar.TextEvents
 
                     if (_result.ActionMethodNamesAndArgs[i].Args == null || methodChanged)
                     {
-                        _result.ActionMethodNamesAndArgs[i].Args = new object[methodParams.Length];
+                        _result.ActionMethodNamesAndArgs[i].Args = new MethodNameAndArgs.ArgAndType[methodParams.Length];
                     }
 
                     //loop over the parameters of the selected action method and draw the respective feild for them
@@ -192,15 +215,20 @@ namespace DevonMillar.TextEvents
                     {
                         if (_result.ActionMethodNamesAndArgs[i].Args[j] == null)
                         {
-                            _result.ActionMethodNamesAndArgs[i].Args[j] = methodParams[j].DefaultValue ?? default;
+                            _result.ActionMethodNamesAndArgs[i].Args[j] = new MethodNameAndArgs.ArgAndType()
+                            {
+                                arg = methodParams[j].DefaultValue ?? default,
+                                type = methodParams[j].ParameterType,
+                            };
                         }
-                        _result.ActionMethodNamesAndArgs[i].Args[j] = DrawArgField(methodParams[j].ParameterType, _result.ActionMethodNamesAndArgs[i].Args[j], methodParams[j].Name);
+                        _result.ActionMethodNamesAndArgs[i].Args[j].arg = DrawArgField(methodParams[j].ParameterType, _result.ActionMethodNamesAndArgs[i].Args[j].arg, methodParams[j].Name);
                     }
 
-                    //if (GUILayout.Button("Delete", GUILayout.MaxWidth(50)))
-                    //{
-                    //    workQueue.Enqueue(() => _result.RemoveActionMethodNamesAndArgs(i));
-                    //}
+                    if (GUILayout.Button("-", GUILayout.MaxWidth(35)))
+                    {
+                        int delIndex = i;
+                        workQueue.Enqueue(() => _result.RemoveActionMethodNamesAndArgs(delIndex));
+                    }
                     EditorGUILayout.EndHorizontal();
 
 
@@ -213,50 +241,11 @@ namespace DevonMillar.TextEvents
                 }
                 GUILayout.EndHorizontal();
             }
-
-            //draw result choices
-
-            object key = _result.ToString() + _result.GetHashCode().ToString() + " branching";
-            if (!storedToggles.ContainsKey(key))
-            {
-                storedToggles.Add(key, false);
-            }
-
-            GUILayout.Space(10.0f);
-
-            if (_result.Choices.Count == 0)
-            {
-                storedToggles[key] = EditorGUILayout.Toggle("Branching", storedToggles[key]);
-            }
-            else
-            {
-                storedToggles[key] = true;
-            }
-
-            if (storedToggles[key])
-            {
-                EditorGUILayout.LabelField("Choices");
-                DrawAllChoices(_result.Choices, (choice) => _result.RemoveChoice(choice));
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(15.0f * EditorGUI.indentLevel);
-                if (GUILayout.Button("Add choice", GUILayout.MaxWidth(100)))
-                {
-                    _result.AddChoice(new TextEvent.Choice("A choice", null));
-                }
-
-                GUILayout.EndHorizontal();
-            }
-            EditorGUI.indentLevel -= 2;
-
-            GUILayout.Space(30.0f);
-            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
-        //check a type and draw the appropriate feild
+        //check a type and draw the appropriate field
         object DrawArgField(System.Type _argType, object _val, string _label)
         {
-            //there might be a better way to do this but I don't know any
             if (_argType == typeof(int))
             {
                return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val));
@@ -273,9 +262,16 @@ namespace DevonMillar.TextEvents
             {
                 return EditorGUILayout.TextField(_label, _val.ToString());
             }
-            else
+            if (_argType.IsEnum)
             {
-                Debug.LogError("[TextEventAction] methods must only have parameters of type int, float, bool or string");
+                object enumValue = (_val is DBNull) ? Enum.GetValues(_argType).GetValue(0) : Enum.Parse(_argType, _val.ToString());
+                return enumValue = EditorGUILayout.EnumPopup(enumValue as Enum);
+
+                //return EditorGUILayout.EnumPopup(_label, (System.Enum));
+            }
+            if (_argType.IsSubclassOf(typeof(UnityEngine.Object)))
+            {
+                return EditorGUILayout.ObjectField(_val as UnityEngine.Object, _argType, false);
             }
             return null;
         }
@@ -287,16 +283,21 @@ namespace DevonMillar.TextEvents
 
         private void OnEnable()
         {
+            TextEventData.ReloadAll();
             System.Random rng = new System.Random(42);
             GetActions();
-            Serializer.Init();
             indentColors = new Color[20];
 
+            if (AvailableEvents.Count == 0)
+            {
+                CreateNewData();
+            }
             for (int i = 0; i < indentColors.Length; i++)
             {
                 indentColors[i] = new Color((float)rng.NextDouble() * 0.5f, (float)rng.NextDouble() * 0.5f, (float)rng.NextDouble(), 0.3f);
             }
 
+            
             if (selectedEvent == null)
             {
                 ChangeEvent(0);
@@ -307,13 +308,22 @@ namespace DevonMillar.TextEvents
 
         private void OnGUI()
         {
+            if (selectedEvent != null)
+            {
+                EditorUtility.SetDirty(selectedEvent);
+            }
+            
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true);
 
+            // Set the padding for the scrollable area
+            const int padding = 20;
+            Rect paddingRect = new Rect(padding, padding, position.width - padding * 2, position.height - padding * 2);
+            GUILayout.BeginArea(paddingRect);
+            
             textAreaStyle = new GUIStyle(EditorStyles.textArea);
             textAreaStyle.wordWrap = true;
             //
-            string[] options = Serializer.GetAllEventTitlesWithID(true).ToArray();
-
+            string[] options = AvailableEvents.Select(e => AvailableEvents.IndexOf(e).ToString() + ": " + e.Title).ToArray();
 
             GUILayout.BeginHorizontal();
 
@@ -327,18 +337,50 @@ namespace DevonMillar.TextEvents
             index,
             options
             );
+            
+            
             if (GUILayout.Button("+", GUILayout.MaxWidth(35.0f)))
             {
-                selectedEvent = new TextEvent("New event", "", Serializer.HighestID + 1, null, null);
-                newIndex = index = Serializer.SerializeEvent(selectedEvent);
-                ChangeEvent(index);
+                newIndex = CreateNewData();
             }
             GUILayout.EndHorizontal();
+            
+            EditorGUILayout.LabelField("Labels");
+            
+            List<string> labelOptions = TextEventToolkitSettings.Instance.Labels.ToList();
+            for (int i = 0; i < selectedEvent.Labels.Count(); i++)
+            {
+                GUILayout.BeginHorizontal();
+                int labelIndex = labelOptions.IndexOf(selectedEvent.Labels[i]);
+                
+                labelIndex = EditorGUILayout.Popup(
+                    $"Label {i+1}:",
+                    labelIndex,
+                    labelOptions.ToArray()
+                );
+                
+                selectedEvent.Labels[i] = labelIndex >= 0 ? 
+                    labelOptions[labelIndex]
+                    : null;
+                
+                //remove label button
+                if (selectedEvent.Labels.Count > 0 && GUILayout.Button("-", GUILayout.MaxWidth(35.0f)))
+                {
+                    selectedEvent.Labels.RemoveAt(i);
+                }
+                GUILayout.EndHorizontal();
+            }
+            
 
+            if (GUILayout.Button("+", GUILayout.MaxWidth(35.0f)))
+            {
+                selectedEvent.Labels.Add(TextEventToolkitSettings.Instance.DefaultFirstLabel ? labelOptions.FirstOrDefault() : null);
+            }
+
+            selectedEvent.BanAfterUse = EditorGUILayout.Toggle("Ban after use", selectedEvent.BanAfterUse);
+            
             if (newIndex != index)
             {
-                Serializer.SerializeEvent(selectedEvent);
-
                 //load new event 
                 index = newIndex;
                 ChangeEvent(index);
@@ -354,14 +396,26 @@ namespace DevonMillar.TextEvents
             GUILayout.BeginVertical();
             if (GUILayout.Button("Save"))
             {
-                Serializer.SerializeEvent(selectedEvent);
+                foreach (TextEvent.Result result in selectedEvent.Choices.SelectMany(selectedEventChoice => selectedEventChoice.Results))
+                    result.UpdateActions();
+                
+                AssetDatabase.SaveAssets();
+                //Serializer.SerializeEvent(selectedEvent);
             }
 
+            if (GUILayout.Button("Settings"))
+            {
+                TextEventToolkitSettings settingsAsset = AssetDatabase.LoadAssetAtPath<TextEventToolkitSettings>(FilePaths.SettingsPath);
+                Selection.activeObject = settingsAsset;
+            }
             if (GUILayout.Button("Delete event"))
             {
                 if (EditorUtility.DisplayDialog("Delete event", "Are you sure you want to delete " + selectedEvent.Title + "?", "Delete", "Cancel"))
                 {
-                    Serializer.DeleteEvent(index);
+                    string pathToDelete = AssetDatabase.GetAssetPath(selectedEvent);
+                    AssetDatabase.DeleteAsset(pathToDelete);
+                    TextEventData.ReloadAll();
+                    
                     if (index + 1 == options.Length)
                     {
                         index--;
@@ -373,20 +427,48 @@ namespace DevonMillar.TextEvents
                 }
             }
 
-            if (GUILayout.Button("Refresh XML"))
-            {
-                Serializer.Init();
-            }
+            // if (GUILayout.Button("Refresh"))
+            // {
+            //     Serializer.Init();
+            //     
+            // }
             GUILayout.EndVertical();
 
             EditorGUILayout.EndScrollView();
+            GUILayout.EndArea();
 
             while (workQueue.Any()) workQueue.Dequeue().Invoke();
+        }
+        int CreateNewData()
+        {
+            int newIndex;
+            // Create a new instance of the ScriptableObject
+            TextEventData newObj = CreateInstance<TextEventData>();
+            newObj.BanAfterUse = TextEventToolkitSettings.Instance.BanByDefault;
+            // Create a new asset file for the ScriptableObject
+             
+            if (!Directory.Exists(FilePaths.TextEventPath))
+            {
+                Directory.CreateDirectory(FilePaths.TextEventPath);
+            }
+            AssetDatabase.CreateAsset(newObj, FilePaths.NewTextEventPath);
+            AssetDatabase.SaveAssets();
+
+            TextEventData.ReloadAll();
+            newIndex = AvailableEvents.Count - 1;
+            return newIndex;
         }
 
         void ChangeEvent(int _index)
         {
-            selectedEvent = TextEvent.CreateFromIndex(_index, true, false);
+            if (selectedEvent != null)
+            {
+                AssetDatabase. SaveAssets();
+            }
+            selectedEvent = AvailableEvents[_index];
+            
+            //throw new System.NotImplementedException();
+            //selectedEvent = TextEvent.CreateFromIndex(_index, true, false);
         }
     }
 }

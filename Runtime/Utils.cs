@@ -26,17 +26,12 @@ namespace DevonMillar
             return _array[rand];
         }
     }
-    static class ListExtentions
+    static class EnumerableExtensions
     {
-        public static T GetRandom<T>(this List<T> _list)
-        {
-            return Utils.GetRandom<T>(_list);
-        }
-
-        //TODO: test and use this for lists too
         public static T GetRandom<T>(this IEnumerable<T> _collection)
         {
-            return _collection.ElementAt(Random.Range(0, _collection.Count()));
+            IEnumerable<T> collection = _collection as T[] ?? _collection.ToArray();
+            return collection.Any() ? collection.ElementAt(Random.Range(0, collection.Count())) : default(T);
         }
     }
 }

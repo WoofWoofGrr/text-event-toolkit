@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using static DevonMillar.TextEvents.TextEvent;
 
 namespace DevonMillar.TextEvents
 {
@@ -13,6 +14,7 @@ namespace DevonMillar.TextEvents
         [SerializeField] TextMeshProUGUI titleText;
         [SerializeField] TextMeshProUGUI bodyText;
         [SerializeField] Transform choiceContainer;
+        [SerializeField] Image image;
 
         List<TextMeshProUGUI> activeChoices = new();
 
@@ -21,7 +23,7 @@ namespace DevonMillar.TextEvents
         // Start is called before the first frame update
         void Awake()
         {
-            TextEvent.OnAnyTextEventEnter += TextEventEntered;
+            OnAnyTextEventEnter += TextEventEntered;
         }
         private void Start()
         {
@@ -37,21 +39,33 @@ namespace DevonMillar.TextEvents
         {
 
         }
-        private void CreateChoiceTexts(List<TextEvent.Choice> _choices)
+        private void CreateChoiceTexts(List<Choice> _choices)
         {
             float offset = 0.0f;
+
+            foreach (Choice choice in _choices)
+            {
+                offset = CreateChoiceText(choice.Text, offset, () => choice.Pick());
+
+            }
+        }
+        float CreateChoiceText(string _text, float _offset, System.Action _callback)
+        {
             Vector2 anchor = Vector2.zero;
 
-            foreach (TextEvent.Choice choice in _choices)
-            {
-                TextMeshProUGUI newChoiceUI = Instantiate(choicePrefab, choiceContainer);
-                newChoiceUI.text = "> " + choice.Text;
-                newChoiceUI.rectTransform.anchoredPosition = anchor + new Vector2(0.0f, offset);
-                newChoiceUI.GetComponent<Button>().onClick.AddListener(() => choice.Pick());
-                activeChoices.Add(newChoiceUI);
+            TextMeshProUGUI newChoiceUI = Instantiate(choicePrefab, choiceContainer);
+            newChoiceUI.text = "> " + _text;
+            newChoiceUI.rectTransform.anchoredPosition = anchor + new Vector2(0.0f, _offset);
+            newChoiceUI.GetComponent<Button>().onClick.AddListener(_callback.Invoke);
+            activeChoices.Add(newChoiceUI);
 
-                offset += newChoiceUI.rectTransform.sizeDelta.y; ;
-            }
+            _offset += newChoiceUI.rectTransform.sizeDelta.y;
+            return _offset;
+        }
+
+        private void CreatePostResultChoice(Result _result)
+        {
+            CreateChoiceText(_result.AcknowledgmentText, 0.0f, _result.AcknowledgedResult);
         }
         private void DestroyChoices()
         {
@@ -59,7 +73,7 @@ namespace DevonMillar.TextEvents
             activeChoices.Clear();
         }
 
-        private void TextEventUpdateUI(string _title, string _body, List<TextEvent.Choice> _choices = null)
+        private void TextEventUpdateUI(string _title, string _body, List<Choice> _choices = null, Result _result = null)
         {
             DestroyChoices();
             if (_body != null)
@@ -69,11 +83,22 @@ namespace DevonMillar.TextEvents
             if (_title != null)
             {
                 titleText.text = _title;
-
             }
-            if (_choices != null)
+            if (_choices is { Count: > 0 })
             {
                 CreateChoiceTexts(_choices);
+            }
+            else
+            {
+                if (_result != null)
+                {
+                    CreatePostResultChoice(_result);
+                }
+                else
+                {
+                    //HACK: this is handling events with no choices, it works but shouldn't need to use ForceExitAllEvents
+                    CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents);
+                }
             }
         }
 
@@ -81,21 +106,21 @@ namespace DevonMillar.TextEvents
         private void TextEventEntered(TextEvent _event)
         {
             DestroyChoices();
-
+            image.sprite = _event.Image;
             TextEventUpdateUI(_event.Title + (debugMode ? " (" + _event.ID + ")" : ""), _event.Text, _event.Choices);
             //_event.OnChoiceSelected += ChoiceSelected;
-            _event.OnChoiceSelected += (_choice, _result) => TextEventUpdateUI(null, (_choice.PostText ?? "") + (_result.Text ?? ""), _result.Choices);
+            _event.OnChoiceSelected += (_choice, _result) => TextEventUpdateUI(null, (_choice.PostText ?? "") + (_result.Text ?? ""), null, _result);
             _event.OnTextEventExit += Destroy;
         }
 
-        private void ChoiceSelected(TextEvent.Choice _choice, TextEvent.Result _result)
+        private void ChoiceSelected(Choice _choice, Result _result)
         {
             UpdateBodyText((_choice.PostText ?? "") + (_result.Text ?? ""));
         }
 
         void Destroy(TextEvent _event)
         {
-            TextEvent.OnAnyTextEventEnter -= TextEventEntered;
+            OnAnyTextEventEnter -= TextEventEntered;
             _event.OnTextEventExit -= Destroy;
             Destroy(gameObject);
         }

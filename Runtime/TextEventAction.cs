@@ -5,7 +5,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-
 namespace DevonMillar.TextEvents
 {
     [AttributeUsage(AttributeTargets.Method)]
@@ -13,9 +12,9 @@ namespace DevonMillar.TextEvents
     {
         public string Name { get; private set; }
 
-        public struct AtributeAndMethod
+        public struct AttributeAndMethod
         {
-            public AtributeAndMethod(MethodInfo _method, TextEventAction _attribute)
+            public AttributeAndMethod(MethodInfo _method, TextEventAction _attribute)
             {
                 method = _method;
                 attribute = _attribute;
@@ -25,9 +24,9 @@ namespace DevonMillar.TextEvents
         }
 
         //return a list of all public methods decorated with the TextEventAction attribute in _targetAssemblies, if null, check all non UnityEngine assemblies
-        public static List<AtributeAndMethod> GetAll(List<Assembly> _targetAssemblies = null)
+        public static List<AttributeAndMethod> GetAll(List<Assembly> _targetAssemblies = null)
         {
-            List<AtributeAndMethod> actionMethods = new();
+            List<AttributeAndMethod> actionMethods = new();
 
             //get all assemblies if _targetAssemblies is null, filtering out unity and system assemblies
             if (_targetAssemblies == null)
@@ -47,7 +46,7 @@ namespace DevonMillar.TextEvents
                     actionMethods.AddRange(
                     from method in methods
                     where method.GetCustomAttributes(typeof(TextEventAction), true).Length > 0
-                    select new AtributeAndMethod(method, (TextEventAction)method.GetCustomAttributes(typeof(TextEventAction), true)[0])
+                    select new AttributeAndMethod(method, (TextEventAction)method.GetCustomAttributes(typeof(TextEventAction), true)[0])
                     );
                 }
             }
@@ -60,4 +59,6 @@ namespace DevonMillar.TextEvents
             Name = _name;
         }
     }
+    
+
 }

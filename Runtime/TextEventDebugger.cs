@@ -15,20 +15,12 @@ namespace DevonMillar.TextEvents
         void CreateRandomEvent()
         {
             TextEvent.ForceExitAllEvents();
-            TextEvent.CreateRandom().EnterEvent();
-        }
-
-        void LoadEvent(int num)
-        {
-            TextEvent.ForceExitAllEvents();
-            TextEvent.CreateFromIndex(num).EnterEvent();
+            TextEventToolkit.CreateRandom().EnterEvent();
         }
 
         private void Awake()
         {
             Init();
-            selector.onValueChanged.AddListener(LoadEvent);
-            refreshButton.onClick.AddListener(TextEvent.Refresh);
             refreshButton.onClick.AddListener(Init);
             randomButton.onClick.AddListener(CreateRandomEvent);
         }
@@ -36,7 +28,6 @@ namespace DevonMillar.TextEvents
         private void Init()
         {
             selector.ClearOptions();
-            selector.AddOptions(Serializer.GetAllEventTitlesWithID(true));
         }
 
         // Start is called before the first frame update
@@ -53,3 +44,4 @@ namespace DevonMillar.TextEvents
     }
 }
 
+ 
