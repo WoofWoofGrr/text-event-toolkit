@@ -106,6 +106,10 @@ namespace DevonMillar.TextEvents
             {
                 infoText += " - " + _choice.Results.Count + " result" + (_choice.Results.Count > 1 ? "s" : "");
             }
+            if (_choice.Condition != null && _choice.Condition.IsValid)
+            {
+                infoText += " - " + _choice.Condition.Name;
+            }
             foldouts[_choice] = EditorGUILayout.Foldout(foldouts[_choice], infoText);
 
             GUILayout.Space(10);
@@ -126,6 +130,9 @@ namespace DevonMillar.TextEvents
             GUILayout.BeginVertical(vertColorStyle);
 
             DrawConditionalField(_choice.Condition, _choice.RemoveCondition, _choice.CreateCondition);
+            
+            GUILayout.Label("Hover text");
+            _choice.HoverText = GUILayout.TextField(_choice.HoverText, textAreaStyle);
             
             //draw each possible result of this choice
             _choice.Results.ForEach(e => DrawResult(e, () => _choice.RemoveResult(e)));

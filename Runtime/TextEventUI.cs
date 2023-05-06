@@ -45,11 +45,11 @@ namespace DevonMillar.TextEvents
 
             foreach (Choice choice in _choices)
             {
-                offset = CreateChoiceText(choice.Text, offset, () => choice.Pick());
+                offset = CreateChoiceText(choice.Text, offset, () => choice.Pick(), choice.Condition.IsValid ? Color.yellow : Color.white);
 
             }
         }
-        float CreateChoiceText(string _text, float _offset, System.Action _callback)
+        float CreateChoiceText(string _text, float _offset, System.Action _callback, Color _color)
         {
             Vector2 anchor = Vector2.zero;
 
@@ -57,6 +57,7 @@ namespace DevonMillar.TextEvents
             newChoiceUI.text = "> " + _text;
             newChoiceUI.rectTransform.anchoredPosition = anchor + new Vector2(0.0f, _offset);
             newChoiceUI.GetComponent<Button>().onClick.AddListener(_callback.Invoke);
+            newChoiceUI.color = _color;
             activeChoices.Add(newChoiceUI);
 
             _offset += newChoiceUI.rectTransform.sizeDelta.y;
@@ -65,7 +66,7 @@ namespace DevonMillar.TextEvents
 
         private void CreatePostResultChoice(Result _result)
         {
-            CreateChoiceText(_result.AcknowledgmentText, 0.0f, _result.AcknowledgedResult);
+            CreateChoiceText(_result.AcknowledgmentText, 0.0f, _result.AcknowledgedResult, Color.white);
         }
         private void DestroyChoices()
         {
@@ -97,7 +98,7 @@ namespace DevonMillar.TextEvents
                 else
                 {
                     //HACK: this is handling events with no choices, it works but shouldn't need to use ForceExitAllEvents
-                    CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents);
+                    CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents, Color.white);
                 }
             }
         }

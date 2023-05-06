@@ -113,12 +113,15 @@ namespace DevonMillar.TextEvents
             void ParseActions()
             {
                 List<MethodInfo> methods = TextEventAction.GetAll().Select(e => e.method).ToList();
-                foreach (SerializedMethodCall methodNameAndArgs in ActionMethodNamesAndArgs)
+                foreach (SerializedMethodCall call in ActionMethodNamesAndArgs)
                 {
-                    MethodInfo method = methodNameAndArgs.GetMethodInfo(methods);
+                    if (!call.IsValid)
+                        return;
+                    
+                    MethodInfo method = call.GetMethodInfo(methods);
                     
                     actionMethods ??= new();
-                    actionMethods.Add(() => method.Invoke(null, methodNameAndArgs.Args.Select(e => e.arg).ToArray()));
+                    actionMethods.Add(() => method.Invoke(null, call.Args.Select(e => e.arg).ToArray()));
                 }
             }
 

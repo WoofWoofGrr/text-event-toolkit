@@ -13,10 +13,10 @@ namespace DevonMillar.TextEvents
         public class Choice
         {
             [field: SerializeField] public string Text { get; set; }
+            [field: SerializeField] public string HoverText { get; set; }
             [field: SerializeField] public string PostText { get; private set; }
             [field: SerializeField] public List<Result> Results { get; private set; }
-            [field: SerializeField]
-            public SerializedMethodCall Condition { get; private set; } = new("", null);
+            [field: SerializeField] public SerializedMethodCall Condition { get; private set; } = new("", null);
             
             public event System.Action<Choice, Result> OnChoiceSelected;
             public event System.Action<Choice, Result> OnFinalChoice;
