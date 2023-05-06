@@ -399,10 +399,7 @@ namespace DevonMillar.TextEvents
 
         private void OnGUI()
         {
-            if (selectedEvent != null && GUI.changed)
-            {
-                EditorUtility.SetDirty(selectedEvent);
-            }
+            EditorUtility.SetDirty(selectedEvent);
             
             scrollPos = GUILayout.BeginScrollView(scrollPos, false, true);
 
