@@ -340,8 +340,8 @@ namespace DevonMillar.TextEvents
                return EditorGUILayout.IntField(_label, System.Convert.ToInt32(_val ?? default(int)));
             }
             if (_argType == typeof(float))
-            {
-               return EditorGUILayout.FloatField(_label, (float)(_val ?? default(float)));
+            { 
+                return EditorGUILayout.FloatField(_label, System.Convert.ToSingle(_val ?? default(float)));
             }
             if (_argType == typeof(bool))
             {
