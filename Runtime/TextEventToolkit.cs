@@ -10,8 +10,9 @@ namespace DevonMillar.TextEvents
         public static string HomePath => Path.Combine("Assets", "Resources", "TextEventToolkit");
         public static string SettingsPath => Path.Combine(HomePath, "TextEventToolkitSettings.asset");
         public static string TextEventPath => Path.Combine(HomePath, "TextEvents");
+        #if UNITY_EDITOR
         public static string NewTextEventPath => AssetDatabase.GenerateUniqueAssetPath(Path.Combine(TextEventPath, "New Text Event.asset"));
-
+        #endif
     }
     public static class TextEventToolkit
     {

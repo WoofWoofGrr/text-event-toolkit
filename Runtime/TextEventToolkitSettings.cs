@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
 namespace DevonMillar.TextEvents
 {
@@ -17,7 +16,9 @@ namespace DevonMillar.TextEvents
         static TextEventToolkitSettings CreateNewSettingsAsset()
         {
             TextEventToolkitSettings newObj = CreateInstance<TextEventToolkitSettings>();
+            #if UNITY_EDITOR
             AssetDatabase.CreateAsset(newObj, FilePaths.SettingsPath);
+            #endif           
             return Resources.Load<TextEventToolkitSettings>("TextEventToolkit/TextEventToolkitSettings");
         }
         static TextEventToolkitSettings instance;

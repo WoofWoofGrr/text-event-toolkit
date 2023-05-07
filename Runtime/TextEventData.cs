@@ -51,6 +51,7 @@ namespace DevonMillar.TextEvents
             Unregister();
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void ReloadAll()
         {
             LogVerbose("Reloading text event objects");
