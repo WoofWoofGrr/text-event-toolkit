@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -117,6 +118,11 @@ namespace DevonMillar.TextEvents
         private void ChoiceSelected(Choice _choice, Result _result)
         {
             UpdateBodyText((_choice.PostText ?? "") + (_result.Text ?? ""));
+        }
+        
+        void OnDestroy()
+        {
+            ForceExitAllEvents();
         }
 
         void Destroy(TextEvent _event)
