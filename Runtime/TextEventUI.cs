@@ -10,6 +10,8 @@ namespace DevonMillar.TextEvents
 {
     public class TextEventUI : MonoBehaviour
     {
+        TMPro.TMP_FontAsset font;
+        
         //TextEvent currentTextEvent = null;
         [SerializeField] TextMeshProUGUI choicePrefab;
         [SerializeField] TextMeshProUGUI titleText;
@@ -25,6 +27,13 @@ namespace DevonMillar.TextEvents
         void Awake()
         {
             OnAnyTextEventEnter += TextEventEntered;
+            font = TextEventToolkitSettings.Instance.Font;
+
+            if (font != null)
+            {
+                titleText.font = TextEventToolkitSettings.Instance.Font;
+                bodyText.font = TextEventToolkitSettings.Instance.Font;
+            }
         }
         private void Start()
         {
@@ -55,6 +64,10 @@ namespace DevonMillar.TextEvents
             Vector2 anchor = Vector2.zero;
 
             TextMeshProUGUI newChoiceUI = Instantiate(choicePrefab, choiceContainer);
+            if (font != null)
+            {
+                newChoiceUI.font = TextEventToolkitSettings.Instance.Font;
+            }
             newChoiceUI.text = "> " + _text;
             newChoiceUI.rectTransform.anchoredPosition = anchor + new Vector2(0.0f, _offset);
             newChoiceUI.GetComponent<Button>().onClick.AddListener(_callback.Invoke);

@@ -36,6 +36,7 @@ namespace DevonMillar.TextEvents
         [field: SerializeField] public bool DefaultFirstLabel { get; set; } = true;
         [field: SerializeField] public bool BanByDefault { get; set; } = false;
         [field: SerializeField] public List<string> Labels { get; set; }
+        [field: SerializeField] public TMPro.TMP_FontAsset Font { get; private set; }
         
         [field: SerializeField] public string ActionAssembly { get; set; }
         [field: SerializeField] public string PredicateAssembly { get; set; }
