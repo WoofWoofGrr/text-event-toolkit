@@ -59,13 +59,21 @@ namespace DevonMillar.TextEvents
             
             foreach (ArgAndType argAndType in Args)
             {
-                if (argAndType.type.IsEnum)
+                try
                 {
-                    argAndType.arg = (argAndType.arg is DBNull) ? Enum.GetValues(argAndType.type).GetValue(0) : Enum.Parse(argAndType.type, argAndType.arg.ToString());
+                    if (argAndType.type.IsEnum)
+                    {
+                        argAndType.arg = (argAndType.arg is DBNull) ? Enum.GetValues(argAndType.type).GetValue(0) : Enum.Parse(argAndType.type, argAndType.arg.ToString());
+                    }
+                    else
+                    {
+                        argAndType.arg = Convert.ChangeType(argAndType.arg, argAndType.type); //this is just to make sure the type is correct (it's not always correct
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    argAndType.arg = Convert.ChangeType(argAndType.arg, argAndType.type); //this is just to make sure the type is correct (it's not always correct
+                    Debug.LogError($"Error deserializing args for method: {Name}. Args and type is {argAndType?.ToString() ?? "null"}, arg is {argAndType?.arg ?? "null"}, type is {argAndType?.type?.ToString() ?? "null"}"
+                    + $"\nError: {e}");
                 }
             }
         }
