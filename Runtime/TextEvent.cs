@@ -15,14 +15,14 @@ namespace DevonMillar.TextEvents
 
         public static void ForceExitAllEvents() => ForceExitEvents?.Invoke();
 
-        public List<Choice> Choices { get; private set; }
-        public void AddChoice(Choice _newChoice) => Choices.Add(_newChoice);
-        public void RemoveChoice(Choice _choiceToRemove) => Choices.Remove(_choiceToRemove); 
-        public int ID { get; private set; }
-        public string Title { get; set; }
-        public string Label { get; set; }
-        public string Text { get; set; }
-        public Sprite Image { get; set; }
+        internal List<Choice> Choices { get; private set; }
+        internal void AddChoice(Choice _newChoice) => Choices.Add(_newChoice);
+        internal void RemoveChoice(Choice _choiceToRemove) => Choices.Remove(_choiceToRemove);
+        internal int ID { get; private set; }
+        internal string Title { get; set; }
+        internal string Label { get; set; }
+        internal string Text { get; set; }
+        internal Sprite Image { get; set; }
 
         private Result result;
         public event System.Action OnTextEventEnter;

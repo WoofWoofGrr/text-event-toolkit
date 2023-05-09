@@ -54,14 +54,14 @@ namespace DevonMillar.TextEvents
             Application.quitting -= Reset;
             BannedEventDatas.Clear();
         }
-        public static void Log(string _msg)
+        internal static void Log(string _msg)
         {
             if (TextEventToolkitSettings.Instance.LoggingLevel > 0)
             {
                 Debug.Log("TextEventToolKit: " + _msg);
             }
         }
-        public static void LogVerbose(string _msg)
+        internal static void LogVerbose(string _msg)
         {
             if (TextEventToolkitSettings.Instance.LoggingLevel == TextEventToolkitSettings.LogLevel.Verbose)
             {

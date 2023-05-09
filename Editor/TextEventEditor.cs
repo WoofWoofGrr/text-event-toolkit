@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DevonMillar.TextEvents
 {
-    public class TextEventEditor : EditorWindow
+    class TextEventEditor : EditorWindow
     {
         [SerializeField] int index = 0;
 
@@ -22,11 +22,11 @@ namespace DevonMillar.TextEvents
         Dictionary<object, bool> storedToggles = new();
 
         Color[] indentColors;
-        List<TextEventAction.AttributeAndMethod> availableActions;
-        List<TextEventAction.AttributeAndMethod> availablePredicates;
+        List<TextEventAttribute.AttributeAndMethod> availableActions;
+        List<TextEventAttribute.AttributeAndMethod> availablePredicates;
 
         [MenuItem("Tools/Text Event Editor")]
-        public static void ShowWindow()
+        static void ShowWindow()
         {
             TextEventEditor instance = GetWindow<TextEventEditor>("Text Event Editor");
         }

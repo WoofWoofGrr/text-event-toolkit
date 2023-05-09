@@ -14,30 +14,30 @@ namespace DevonMillar.TextEvents
     public class SerializedMethodCall : ISerializationCallbackReceiver
     {
         [field: SerializeField] public string Name { get; set;}
-        [SerializeField] public string argsJson;
-        public ArgAndType[] Args { get; set; }
-        
         public bool IsValid => !string.IsNullOrEmpty(Name) && Args != null;
-
-        public MethodInfo GetMethodInfo(IEnumerable<MethodInfo> _methods)
+        
+        [SerializeField] internal string argsJson;
+        internal ArgAndType[] Args { get; set; }
+        
+        internal MethodInfo GetMethodInfo(IEnumerable<MethodInfo> _methods)
         {
             return _methods.Where(e => e.Name == Name).Select(e => e).FirstOrDefault();
         }
         //args as object and it's type so we can serialize it and parse it back to the same object
         [System.Serializable]
-        public class ArgAndType
+        internal class ArgAndType
         {
-            public ArgAndType()
+            internal ArgAndType()
             {
                 arg = null;
                 type = null;
             }
-            public Object arg;
-            public System.Type type;
+            internal Object arg;
+            internal System.Type type;
         }
 
         
-        public SerializedMethodCall(string _name, params ArgAndType[] _args)
+        internal SerializedMethodCall(string _name, params ArgAndType[] _args)
         {
             Name = _name;
             Args = _args;
@@ -76,9 +76,9 @@ namespace DevonMillar.TextEvents
         [System.Serializable]
         public class Result : ISerializationCallbackReceiver
         {
-            [field: SerializeField] public string Text { get; set; }
-            [field: SerializeField] public string AcknowledgmentText { get; set; } = TextEventToolkitSettings.Instance.DefaultAcknowledgmentText;
-            [field: SerializeField] public float Chance { get; set; }
+            [field: SerializeField] public string Text { get; internal set; }
+            [field: SerializeField] public string AcknowledgmentText { get; internal set; } = TextEventToolkitSettings.Instance.DefaultAcknowledgmentText;
+            [field: SerializeField] public float Chance { get; internal set; }
 
             [field: SerializeField] public List<SerializedMethodCall> ActionMethodNamesAndArgs { get; private set; }
             public bool IsFinal => string.IsNullOrEmpty(Text);
@@ -99,7 +99,7 @@ namespace DevonMillar.TextEvents
                 Text = _text;
                 Chance = chance ?? 100.0f;
             }
-            public void UpdateActions()
+            internal void UpdateActions()
             {
                 //this is really really slow so do it on it's own thread, hopefully it's done by the time the player is finished reading so there will be no lag
                 TextEventToolkitSettings settings = TextEventToolkitSettings.Instance;
@@ -108,7 +108,7 @@ namespace DevonMillar.TextEvents
                 actionParseThread?.Join();
             }
 
-            public void RemoveActionMethodNamesAndArgs(int _index)
+            internal void RemoveActionMethodNamesAndArgs(int _index)
             {
                 ActionMethodNamesAndArgs.RemoveAt(_index);
             }
@@ -128,7 +128,7 @@ namespace DevonMillar.TextEvents
             }
 
             //run all the actions the result contains
-            public List<object> Execute()
+            internal List<object> Execute()
             {
                 List<object> returns = new();
 
@@ -151,7 +151,7 @@ namespace DevonMillar.TextEvents
                 }, null);
             }
             //called by UI
-            public void AcknowledgedResult()
+            internal void AcknowledgedResult()
             {
                 OnResultAcknowledged?.Invoke();
             }

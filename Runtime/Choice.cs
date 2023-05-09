@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Xml;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
+[assembly: InternalsVisibleTo("devonmillar.TextEventToolkit.Editor")]
 namespace DevonMillar.TextEvents
 {
 
@@ -12,16 +14,16 @@ namespace DevonMillar.TextEvents
         [System.Serializable]
         public class Choice
         {
-            [field: SerializeField] public string Text { get; set; }
-            [field: SerializeField] public string HoverText { get; set; }
+            [field: SerializeField] public string Text { get; internal set; }
+            [field: SerializeField] public string HoverText { get; internal set; }
             [field: SerializeField] public string PostText { get; private set; }
-            [field: SerializeField] public List<Result> Results { get; private set; }
-            [field: SerializeField] public SerializedMethodCall Condition { get; private set; } = new("", null);
+            [field: SerializeField] public List<Result> Results { get; internal set; }
+            [field: SerializeField] public SerializedMethodCall Condition { get; internal set; } = new("", null);
             
             public event System.Action<Choice, Result> OnChoiceSelected;
             public event System.Action<Choice, Result> OnFinalChoice;
             
-            public Choice(string _text, IEnumerable<Result> _results, string _postText = "")
+            internal Choice(string _text, IEnumerable<Result> _results, string _postText = "")
             {
                 Text = _text;
                 Results = new();
@@ -31,26 +33,26 @@ namespace DevonMillar.TextEvents
                     Results.AddRange(_results);
                 }
             }
-            public Choice()
+            internal Choice()
             {
                 Text = "New choice";
                 Results = new();
             }
 
-            public void AddResult(Result _newResult)
+            internal void AddResult(Result _newResult)
             {
                 Results.Add(_newResult);
             }
-            public void RemoveResult(Result _result)
+            internal void RemoveResult(Result _result)
             {
                 Results.Remove(_result);
             }
-            public void RemoveCondition()
+            internal void RemoveCondition()
             {
                 Condition = null;
             }
 
-            public Result Pick()
+            internal Result Pick()
             {
                 Result chosenResult = null;
                 if (Results.Count > 0)
@@ -107,7 +109,7 @@ namespace DevonMillar.TextEvents
 
                 return s;
             }
-            public SerializedMethodCall CreateCondition()
+            internal SerializedMethodCall CreateCondition()
             {
                return Condition = new("", null);
             }
