@@ -17,7 +17,7 @@ namespace DevonMillar.TextEvents
         public bool IsValid => !string.IsNullOrEmpty(Name) && Args != null;
         
         [SerializeField] internal string argsJson;
-        internal ArgAndType[] Args { get; set; }
+        public ArgAndType[] Args { get; set; }
         
         internal MethodInfo GetMethodInfo(IEnumerable<MethodInfo> _methods)
         {
@@ -25,15 +25,15 @@ namespace DevonMillar.TextEvents
         }
         //args as object and it's type so we can serialize it and parse it back to the same object
         [System.Serializable]
-        internal class ArgAndType
+        public class ArgAndType
         {
             internal ArgAndType()
             {
                 arg = null;
                 type = null;
             }
-            internal Object arg;
-            internal System.Type type;
+            public Object arg;
+            public System.Type type;
         }
 
         
