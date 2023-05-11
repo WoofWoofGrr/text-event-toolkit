@@ -18,11 +18,14 @@ namespace DevonMillar.TextEvents
         [SerializeField] TextMeshProUGUI bodyText;
         [SerializeField] Transform choiceContainer;
         [SerializeField] Image image;
+        [SerializeField] TextEventUIPopup popupPrefab;
 
         List<TextMeshProUGUI> activeChoices = new();
 
         [SerializeField] bool debugMode = false;
 
+        int numPopups = 0;
+        
         // Start is called before the first frame update
         void Awake()
         {
@@ -34,10 +37,6 @@ namespace DevonMillar.TextEvents
                 titleText.font = TextEventToolkitSettings.Instance.Font;
                 bodyText.font = TextEventToolkitSettings.Instance.Font;
             }
-        }
-        private void Start()
-        {
-
         }
 
         private void UpdateBodyText(string _text)
@@ -143,6 +142,15 @@ namespace DevonMillar.TextEvents
             OnAnyTextEventEnter -= TextEventEntered;
             _event.OnTextEventExit -= Destroy;
             Destroy(gameObject);
+        }
+
+        internal void CreatePopup(string _text)
+        {
+            TextEventUIPopup popup = Instantiate(popupPrefab, transform);
+            popup.Text = _text;
+            popup.Font = font;
+            popup.transform.position += Vector3.up * numPopups * 225.0f;
+            numPopups++;
         }
     }
 }

@@ -22,15 +22,18 @@ namespace DevonMillar.TextEvents
         public static TextEvent CreateRandomWithLabel(params string[] _labels) => CreateFromData(TextEventData.GetRandomWhere(e => !BannedEventDatas.Contains(e) && _labels.Any(l => e.Labels.Contains(l))));
         public static TextEvent CreateRandomWithAllLabels(params string[] _labels) => CreateFromData(TextEventData.GetRandomWhere(e => !BannedEventDatas.Contains(e) && _labels.All(l => e.Labels.Contains(l))));
         public static TextEvent CreateRandomWhere(System.Func<TextEventData, bool> _predicate) => CreateFromData(TextEventData.GetRandomWhere(e => !BannedEventDatas.Contains(e) && _predicate(e)));
+
+        internal static TextEvent lastEvent;
         
-        static TextEvent CreateFromData(TextEventData newEvent)
+        static TextEvent CreateFromData(TextEventData newEventData)
         {
-            if (newEvent == null)
+            if (newEventData == null)
             {
                 Debug.LogWarning("TextEventToolkit: Tried to create a null event. You are either trying to create an event with a label that does not exist, an invalid predicate, or you have banned all events.");
             }
-            BanIfShouldBan(newEvent);
-            return newEvent.Create();
+            BanIfShouldBan(newEventData);
+            
+            return lastEvent = newEventData.Create();
         }
 
         static void BanIfShouldBan(TextEventData _data)

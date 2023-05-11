@@ -1017,11 +1017,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 825b7921db24ce144a510030dc1bcdf8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  choicePrefab: {fileID: 6777328837394275690, guid: 6bc208c991dc309439c35156b228f15c, type: 3}
+  choicePrefab: {fileID: 6777328837394275690, guid: 6bc208c991dc309439c35156b228f15c,
+    type: 3}
   titleText: {fileID: 5193194547601999350}
   bodyText: {fileID: 5193194548377527271}
   choiceContainer: {fileID: 5193194548105484927}
   image: {fileID: 5193194548124613972}
+  popupPrefab: {fileID: -8431873641747000579, guid: beb592ee85d3baf4aad3f18351413d7f,
+    type: 3}
   debugMode: 0
 --- !u!1 &8744732005849426022
 GameObject:
