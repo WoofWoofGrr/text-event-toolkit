@@ -479,7 +479,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 80}
-  m_SizeDelta: {x: 750, y: 190}
+  m_SizeDelta: {x: 750, y: 40}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &5193194548105484913
 CanvasRenderer:
@@ -784,11 +784,11 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 21.55
+  m_fontSize: 22.15
   m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 14
+  m_fontSizeMin: 18
   m_fontSizeMax: 26
   m_fontStyle: 0
   m_HorizontalAlignment: 1
@@ -1017,14 +1017,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 825b7921db24ce144a510030dc1bcdf8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  choicePrefab: {fileID: 6777328837394275690, guid: 6bc208c991dc309439c35156b228f15c,
-    type: 3}
+  choicePrefab: {fileID: 6777328837394275690, guid: 6bc208c991dc309439c35156b228f15c, type: 3}
   titleText: {fileID: 5193194547601999350}
   bodyText: {fileID: 5193194548377527271}
   choiceContainer: {fileID: 5193194548105484927}
   image: {fileID: 5193194548124613972}
-  popupPrefab: {fileID: -8431873641747000579, guid: beb592ee85d3baf4aad3f18351413d7f,
-    type: 3}
+  popupPrefab: {fileID: -8431873641747000579, guid: beb592ee85d3baf4aad3f18351413d7f, type: 3}
   debugMode: 0
 --- !u!1 &8744732005849426022
 GameObject:
