@@ -142,7 +142,14 @@ namespace DevonMillar.TextEvents
 
                 //wait until the other thread has parsed the actions
                 //run the actions once parsing them has finished
-                actionMethods?.ForEach(method => returns.Add(method.Invoke()));
+                try
+                {
+                    actionMethods?.ForEach(method => returns.Add(method.Invoke()));
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Error executing actions for result: " + Text + "\n" + e);
+                }
                 return returns;
             }
             public void OnBeforeSerialize()
