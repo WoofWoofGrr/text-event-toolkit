@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -52,6 +53,7 @@ namespace DevonMillar.TextEvents
         {
             float offset = 0.0f;
 
+            _choices.Reverse();
             foreach (Choice choice in _choices)
             {
                 offset = CreateChoiceText(choice.Text, offset, () => choice.Pick(), choice.Condition.IsValid ? Color.yellow : Color.white);
@@ -113,6 +115,10 @@ namespace DevonMillar.TextEvents
                     //HACK: this is handling events with no choices, it works but shouldn't need to use ForceExitAllEvents
                     CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents, Color.white);
                 }
+            }
+            if (TextEventToolkit.UsingController)
+            {
+                activeChoices.Last().GetComponent<Button>().Select();
             }
         }
 

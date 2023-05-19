@@ -24,7 +24,9 @@ namespace DevonMillar.TextEvents
         public static TextEvent CreateRandomWhere(System.Func<TextEventData, bool> _predicate) => CreateFromData(TextEventData.GetRandomWhere(e => !BannedEventDatas.Contains(e) && _predicate(e)));
 
         internal static TextEvent lastEvent;
-        
+
+        public static bool UsingController { get; set; } = false;
+
         static TextEvent CreateFromData(TextEventData newEventData)
         {
             if (newEventData == null)
