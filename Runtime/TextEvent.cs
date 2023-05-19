@@ -28,6 +28,13 @@ namespace DevonMillar.TextEvents
         public event System.Action OnTextEventEnter;
         public event System.Action<TextEvent> OnTextEventExit;
         public event System.Action<Choice, Result> OnChoiceSelected;
+        
+        internal event System.Action OnReadyToSelectChoice;
+        public void ReadyToSelectChoice()
+        {
+            OnReadyToSelectChoice?.Invoke();
+            OnReadyToSelectChoice = null;
+        }
 
         public TextEvent(string _title, string _text, int _id, Result _result, IEnumerable<Choice> _choices, Sprite _image = null)
         {
@@ -76,6 +83,7 @@ namespace DevonMillar.TextEvents
             OnTextEventEnter = null;
             OnChoiceSelected = null;
             OnTextEventExit = null;
+            OnReadyToSelectChoice = null;
         }
     }
 }

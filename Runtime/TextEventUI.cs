@@ -116,12 +116,9 @@ namespace DevonMillar.TextEvents
                     CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents, Color.white);
                 }
             }
-            if (TextEventToolkit.UsingController)
-            {
-                activeChoices.Last().GetComponent<Button>().Select();
-            }
         }
 
+        TextEvent textEvent;
         //main hook
         private void TextEventEntered(TextEvent _event)
         {
@@ -131,6 +128,18 @@ namespace DevonMillar.TextEvents
             //_event.OnChoiceSelected += ChoiceSelected;
             _event.OnChoiceSelected += (_choice, _result) => TextEventUpdateUI(null, (_choice.PostText ?? "") + (_result.Text ?? ""), null, _result);
             _event.OnTextEventExit += Destroy;
+            textEvent = _event;
+
+            textEvent.OnReadyToSelectChoice += SelectFirstChoiceIfController;
+        }
+
+        void SelectFirstChoiceIfController()
+        {
+            if (TextEventToolkit.UsingController)
+            {
+                activeChoices.Last().GetComponent<Button>().Select();
+            }
+            textEvent.OnReadyToSelectChoice -= SelectFirstChoiceIfController;
         }
 
         private void ChoiceSelected(Choice _choice, Result _result)
@@ -141,6 +150,7 @@ namespace DevonMillar.TextEvents
         void OnDestroy()
         {
             ForceExitAllEvents();
+            textEvent.OnReadyToSelectChoice -= SelectFirstChoiceIfController;
         }
 
         void Destroy(TextEvent _event)

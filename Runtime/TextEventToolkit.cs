@@ -26,7 +26,7 @@ namespace DevonMillar.TextEvents
         internal static TextEvent lastEvent;
 
         public static bool UsingController { get; set; } = false;
-
+        
         static TextEvent CreateFromData(TextEventData newEventData)
         {
             if (newEventData == null)
