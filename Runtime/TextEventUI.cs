@@ -56,11 +56,11 @@ namespace DevonMillar.TextEvents
             _choices.Reverse();
             foreach (Choice choice in _choices)
             {
-                offset = CreateChoiceText(choice.Text, offset, () => choice.Pick(), choice.Condition.IsValid ? Color.yellow : Color.white);
+                offset = CreateChoiceText(choice.Text, offset, () => choice.Pick(), choice.Condition.IsValid ? Color.yellow : Color.white, out _);
 
             }
         }
-        float CreateChoiceText(string _text, float _offset, System.Action _callback, Color _color)
+        float CreateChoiceText(string _text, float _offset, System.Action _callback, Color _color, out Button _button)
         {
             Vector2 anchor = Vector2.zero;
 
@@ -71,7 +71,8 @@ namespace DevonMillar.TextEvents
             }
             newChoiceUI.text = "> " + _text;
             newChoiceUI.rectTransform.anchoredPosition = anchor + new Vector2(0.0f, _offset);
-            newChoiceUI.GetComponent<Button>().onClick.AddListener(_callback.Invoke);
+            _button = newChoiceUI.GetComponent<Button>();
+            _button.onClick.AddListener(_callback.Invoke);
             newChoiceUI.color = _color;
             activeChoices.Add(newChoiceUI);
 
@@ -81,7 +82,8 @@ namespace DevonMillar.TextEvents
 
         private void CreatePostResultChoice(Result _result)
         {
-            CreateChoiceText(_result.AcknowledgmentText, 0.0f, _result.AcknowledgedResult, Color.white);
+            CreateChoiceText(_result.AcknowledgmentText, 0.0f, _result.AcknowledgedResult, Color.white, out Button button);
+            button.Select();
         }
         private void DestroyChoices()
         {
@@ -113,7 +115,7 @@ namespace DevonMillar.TextEvents
                 else
                 {
                     //HACK: this is handling events with no choices, it works but shouldn't need to use ForceExitAllEvents
-                    CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents, Color.white);
+                    CreateChoiceText(TextEventToolkitSettings.Instance.DefaultAcknowledgmentText, 0.0f, ForceExitAllEvents, Color.white, out Button _);
                 }
             }
         }
