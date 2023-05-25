@@ -399,6 +399,17 @@ namespace DevonMillar.TextEvents
 
         private void OnGUI()
         {
+
+            if (TextEventToolkitSettings.Instance == null)
+            {
+                EditorGUILayout.LabelField("Settings asset not found, a settings asset must be created before use.");
+                
+                if (GUILayout.Button("Create settings asset"))
+                {
+                    TextEventToolkitSettings.CreateNewSettingsAsset();
+                }
+            }
+                
             EditorUtility.SetDirty(selectedEvent);
             
             scrollPos = GUILayout.BeginScrollView(scrollPos, false, true);

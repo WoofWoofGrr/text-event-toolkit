@@ -15,7 +15,7 @@ namespace DevonMillar.TextEvents
             Verbose,
         }
 
-        static TextEventToolkitSettings CreateNewSettingsAsset()
+        internal static TextEventToolkitSettings CreateNewSettingsAsset()
         {
             TextEventToolkitSettings newObj = CreateInstance<TextEventToolkitSettings>();
             #if UNITY_EDITOR
@@ -28,7 +28,7 @@ namespace DevonMillar.TextEvents
         {
             get
             {
-                instance ??= Resources.Load<TextEventToolkitSettings>("TextEventToolkit/TextEventToolkitSettings") ?? CreateNewSettingsAsset();
+                instance ??= Resources.Load<TextEventToolkitSettings>("TextEventToolkit/TextEventToolkitSettings");
                 return instance;
             }
         }
