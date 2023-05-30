@@ -32,6 +32,7 @@ namespace DevonMillar.TextEvents
             if (newEventData == null)
             {
                 Debug.LogWarning("TextEventToolkit: Tried to create a null event. You are either trying to create an event with a label that does not exist, an invalid predicate, or you have banned all events.");
+                return null;
             }
             BanIfShouldBan(newEventData);
             
